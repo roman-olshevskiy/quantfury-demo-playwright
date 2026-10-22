@@ -3,6 +3,13 @@
 Planned P1 work (requirements §25–26). One branch and one PR per item, each cut from the latest
 `main`; squash merge. UI-related items must be verified locally (ADR 0001).
 
+## Progress
+
+| #   | Status                                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | Done on `chore/dependabot-audit`: `.github/dependabot.yml`, blocking `Dependency audit` job (`npm run audit:deps`) |
+| 2–7 | Not started                                                                                                        |
+
 ## Order and scope
 
 | #   | Item                           | Branch                   | Scope                                                                                                                                                                                                                                                                      | Done when                                           | Size |

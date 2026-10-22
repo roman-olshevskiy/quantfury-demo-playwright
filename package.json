@@ -14,6 +14,7 @@
     "typecheck": "tsc --project tsconfig.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "audit:deps": "npm audit --audit-level=high && npm audit signatures",
     "test": "playwright test --project=api-live --project=ui-chromium --project=ui-mocked --grep \"@smoke|@mocked\"",
     "test:smoke": "playwright test --project=api-live --project=ui-chromium --grep @smoke",
     "test:api": "playwright test --project=api-live",

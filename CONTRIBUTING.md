@@ -37,7 +37,10 @@ messages, PR descriptions — is written in **English**.
 4. Open a PR to `main`. The description says **what changed, why, and how it was validated**
    (commands and results, including the local UI runs above when relevant).
 5. CI must be green: static checks and the live API suite are required.
-6. Dependency updates go in their own PR with the same checks.
+6. Dependency updates go in their own PR with the same checks. Dependabot opens them; before
+   merging one that updates `@playwright/test` (or anything the UI suites use), run
+   `npx playwright install` and the local UI suites above. Run `npm run audit:deps` after
+   adding a dependency.
 
 ## Adding or changing a test
 
