@@ -65,7 +65,48 @@ still starting: classified **product behavior** (start-up stall, see
 [product-discovery.md §12](product-discovery.md#12-uncertainties-and-assumptions)), not test
 defects.
 
-## Repeatability runs (M4)
+## Repeatability runs (v1.0.0)
 
-Pending: 5 sequential live smoke runs (2 workers, no retries) and 10 mocked runs (4 workers, no
-retries), with commit, environment, test count, duration and first-attempt pass rate.
+Controlled, sequential runs as required by §22: no retries (`--retries=0`), spaced (60 s between
+live smoke runs, 20 s between mocked runs) so they never form continuous load.
+
+| Item        | Value                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------- |
+| Date        | 2026-10-22, 11:56–12:08 UTC (US and EU markets: pre-market / open)                    |
+| Commit      | `608acf3` (`main` after PR #6; v1.0.0 adds only documentation and the version number) |
+| Environment | Windows 11 Pro 10.0.26300, Intel Core Ultra 7 255H, 31 GB RAM, residential network    |
+| Tooling     | Node.js 24.13.0, Playwright 1.64.0, Chromium (headless)                               |
+| Pre-flight  | `available` before every run                                                          |
+
+| Suite                                             | Runs | Workers | Tests per run | Tests executed | First-attempt pass rate | Duration per run (min / mean / max) | Slow starts |
+| ------------------------------------------------- | ---: | ------: | ------------: | -------------: | ----------------------- | ----------------------------------- | ----------: |
+| Live smoke (`api-live` + `ui-chromium`, `@smoke`) |    5 |       2 |             6 |             30 | **30/30 (100 %)**       | 8.1 / 11.9 / 14.5 s                 |           0 |
+| Mocked (`ui-mocked`)                              |   10 |       4 |             6 |             60 | **60/60 (100 %)**       | 7.9 / 10.9 / 20.6 s                 |   1 (run 9) |
+
+Per run:
+
+| Suite      | Run | Started (UTC) | Passed | Duration | Notes                                                      |
+| ---------- | --: | ------------- | -----: | -------: | ---------------------------------------------------------- |
+| live smoke |   1 | 11:56:09      |    6/6 |   12.8 s |                                                            |
+| live smoke |   2 | 11:57:23      |    6/6 |   14.5 s |                                                            |
+| live smoke |   3 | 11:58:39      |    6/6 |   11.2 s |                                                            |
+| live smoke |   4 | 11:59:52      |    6/6 |   12.8 s |                                                            |
+| live smoke |   5 | 12:01:17      |    6/6 |    8.1 s |                                                            |
+| mocked     |   1 | 12:02:29      |    6/6 |   10.9 s |                                                            |
+| mocked     |   2 | 12:03:01      |    6/6 |    9.6 s |                                                            |
+| mocked     |   3 | 12:03:32      |    6/6 |   12.3 s |                                                            |
+| mocked     |   4 | 12:04:06      |    6/6 |   11.8 s |                                                            |
+| mocked     |   5 | 12:04:39      |    6/6 |    7.9 s |                                                            |
+| mocked     |   6 | 12:05:08      |    6/6 |    8.0 s |                                                            |
+| mocked     |   7 | 12:05:38      |    6/6 |   11.1 s |                                                            |
+| mocked     |   8 | 12:06:10      |    6/6 |    8.9 s |                                                            |
+| mocked     |   9 | 12:06:40      |    6/6 |   20.6 s | one `slow-start` (known start-up stall), test still passed |
+| mocked     |  10 | 12:07:22      |    6/6 |    7.9 s |                                                            |
+
+**Reading the numbers.** 90 of 90 test executions passed on the first attempt locally, with no
+retries. This supports the smoke and mocked suites as stable on a regular network; it is not a
+claim about the whole framework, and it does not cover GitHub-hosted runners, where the UI
+suites are blocked by the CDN (ADR 0001) and only the live API suite runs as a gate
+(18/18 in PR run #3). The one slow start (≈ 1 in 60 loads in this sample) is consistent with the
+start-up stall documented in discovery §12 and was absorbed by the dedicated `appStart` timeout
+without a retry.
