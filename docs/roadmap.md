@@ -5,10 +5,11 @@ Planned P1 work (requirements §25–26). One branch and one PR per item, each c
 
 ## Progress
 
-| #   | Status                                                                                                             |
-| --- | ------------------------------------------------------------------------------------------------------------------ |
-| 1   | Done on `chore/dependabot-audit`: `.github/dependabot.yml`, blocking `Dependency audit` job (`npm run audit:deps`) |
-| 2–7 | Not started                                                                                                        |
+| #   | Status                                                                                                                                                        |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Done (PR #9): `.github/dependabot.yml`, blocking `Dependency audit` job (`npm run audit:deps`)                                                                |
+| 2   | Done on `test/a11y-smoke`: `@axe-core/playwright` 4.13.0, UI-08/UI-09, baseline of 3 known rules in `src/data/accessibility-baseline.ts`, `npm run test:a11y` |
+| 3–7 | Not started                                                                                                                                                   |
 
 ## Order and scope
 

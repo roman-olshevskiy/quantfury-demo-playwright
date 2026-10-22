@@ -6,7 +6,7 @@ Feature / risk → tests → kind of check. Where each suite runs (locally, CI g
 in [product-discovery.md](product-discovery.md) is listed. Status is updated as tests land.
 
 Legend — **Kind:** contract (schema/envelope), invariant (business rule), negative, behavior (UI),
-consistency (UI vs. same payload), resilience (mocked failure modes).
+consistency (UI vs. same payload), resilience (mocked failure modes), accessibility (axe-core).
 
 ## Live API (`tests/api`, project `api-live`)
 
@@ -30,15 +30,21 @@ All rows are automated (M1).
 
 All rows are automated (M2).
 
-| ID    | Feature             | Risk | Check                                                                                        | Kind     | Tags                    | Test file                                                |
-| ----- | ------------------- | ---- | -------------------------------------------------------------------------------------------- | -------- | ----------------------- | -------------------------------------------------------- |
-| UI-01 | Demo opens          | R1   | Trade screen ready; Watchlist enabled; Portfolio and Limit Orders disabled; search editable  | behavior | `@ui @live @smoke`      | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts) |
-| UI-02 | Widgets render data | R1   | Momentum and Most Traded rows have price (glyph, grouping) and change (`0.00%`) text         | behavior | `@ui @live @smoke`      | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts) |
-| UI-03 | Search and select   | R3   | "Apple" finds `AAPL.OQ`; selecting opens the panel with name, Last Price and a numeric price | behavior | `@ui @live @smoke`      | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts) |
-| UI-04 | Empty search        | R3   | Unknown query shows "No Results Matched", echoes the query, lists Popular Searches           | behavior | `@ui @live @regression` | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts) |
-| UI-05 | Widget filters      | R1   | Top Gainers → Top Losers changes the list; no instrument is in both                          | behavior | `@ui @live @regression` | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts) |
-| UI-06 | Reload state        | R8   | After reload the panel is closed and search is empty; the device id is kept                  | behavior | `@ui @live @regression` | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts) |
-| UI-07 | Real-time channel   | R9   | One SignalR hub connection, MessagePack handshake, frames received                           | behavior | `@ui @live @regression` | [realtime.spec.ts](../tests/ui/realtime.spec.ts)         |
+| ID    | Feature                         | Risk | Check                                                                                        | Kind          | Tags                          | Test file                                                  |
+| ----- | ------------------------------- | ---- | -------------------------------------------------------------------------------------------- | ------------- | ----------------------------- | ---------------------------------------------------------- |
+| UI-01 | Demo opens                      | R1   | Trade screen ready; Watchlist enabled; Portfolio and Limit Orders disabled; search editable  | behavior      | `@ui @live @smoke`            | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
+| UI-02 | Widgets render data             | R1   | Momentum and Most Traded rows have price (glyph, grouping) and change (`0.00%`) text         | behavior      | `@ui @live @smoke`            | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
+| UI-03 | Search and select               | R3   | "Apple" finds `AAPL.OQ`; selecting opens the panel with name, Last Price and a numeric price | behavior      | `@ui @live @smoke`            | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts)   |
+| UI-04 | Empty search                    | R3   | Unknown query shows "No Results Matched", echoes the query, lists Popular Searches           | behavior      | `@ui @live @regression`       | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts)   |
+| UI-05 | Widget filters                  | R1   | Top Gainers → Top Losers changes the list; no instrument is in both                          | behavior      | `@ui @live @regression`       | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
+| UI-06 | Reload state                    | R8   | After reload the panel is closed and search is empty; the device id is kept                  | behavior      | `@ui @live @regression`       | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
+| UI-07 | Real-time channel               | R9   | One SignalR hub connection, MessagePack handshake, frames received                           | behavior      | `@ui @live @regression`       | [realtime.spec.ts](../tests/ui/realtime.spec.ts)           |
+| UI-08 | Accessibility: Trade screen     | R11  | axe (WCAG 2.0/2.1 A, AA) on the populated screen: no rule outside the documented baseline    | accessibility | `@ui @live @regression @a11y` | [accessibility.spec.ts](../tests/ui/accessibility.spec.ts) |
+| UI-09 | Accessibility: search and panel | R11  | axe on the search results and on the instrument panel: no rule outside the baseline          | accessibility | `@ui @live @regression @a11y` | [accessibility.spec.ts](../tests/ui/accessibility.spec.ts) |
+
+Accessibility baseline (known product issues, [accessibility-baseline.ts](../src/data/accessibility-baseline.ts)):
+`button-name` (critical), `scrollable-region-focusable` (serious), `color-contrast` (serious).
+A new rule fails the test; a fixed rule should be removed from the baseline.
 
 ## Integration (`tests/integration`, project `ui-chromium`)
 

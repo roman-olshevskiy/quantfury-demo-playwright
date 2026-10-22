@@ -37,6 +37,18 @@ export default defineConfig(
       'playwright/no-force-option': 'error',
       'playwright/no-skipped-test': ['error', { allowConditional: true }],
       'playwright/no-focused-test': 'error',
+      // Project assertion helpers (src/assertions) count as assertions.
+      'playwright/expect-expect': [
+        'error',
+        {
+          assertFunctionNames: [
+            'expectToMatchSchema',
+            'expectJsonResponse',
+            'expectDemoApiHeaders',
+            'expectNoNewAccessibilityViolations',
+          ],
+        },
+      ],
     },
   },
   {

@@ -58,6 +58,8 @@ A test is done when it meets the Definition of Done (requirements §29):
   `@regression`.
 - It passed locally (and in CI where it runs); failures produce useful diagnostics.
 - It is added to [docs/coverage-map.md](docs/coverage-map.md).
+- Accessibility: add a rule to `src/data/accessibility-baseline.ts` only with the observation
+  that justifies it (where, which elements); remove a rule as soon as the product fixes it.
 
 Where things go:
 

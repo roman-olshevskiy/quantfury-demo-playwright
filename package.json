@@ -21,6 +21,7 @@
     "test:ui": "playwright test --project=ui-chromium --grep-invert @integration",
     "test:integration": "playwright test --project=ui-chromium --grep @integration",
     "test:mocked": "playwright test --project=ui-mocked",
+    "test:a11y": "playwright test --project=ui-chromium --grep @a11y",
     "test:regression": "playwright test --project=api-live --project=ui-chromium --grep @regression",
     "test:cross-browser": "playwright test --project=ui-chromium --project=ui-firefox-smoke --project=ui-webkit-smoke --grep @smoke",
     "test:full": "playwright test --project=api-live --project=ui-chromium --project=ui-mocked",
@@ -32,6 +33,7 @@
     "report": "playwright show-report"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.64.0",
     "@types/node": "24.19.0",
