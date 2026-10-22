@@ -1,3 +1,4 @@
+import { BoundedBuffer } from '../../utils/bounded-buffer';
 import { redactHeaders, redactJson, redactUrl, truncate } from '../../utils/redact';
 
 export interface ApiExchange {
@@ -43,12 +44,10 @@ const KEPT_RESPONSE_HEADERS = new Set([
  * report only when the test fails, so it never needs to hold more than the recent history.
  */
 export class ApiExchangeLog {
-  readonly #capacity: number;
-  readonly #entries: ApiExchange[] = [];
-  #dropped = 0;
+  readonly #entries: BoundedBuffer<ApiExchange>;
 
   constructor(capacity = 50) {
-    this.#capacity = capacity;
+    this.#entries = new BoundedBuffer(capacity);
   }
 
   record(input: ExchangeInput): void {
@@ -67,18 +66,14 @@ export class ApiExchangeLog {
     if (input.transportError !== undefined) entry.transportError = input.transportError;
 
     this.#entries.push(entry);
-    if (this.#entries.length > this.#capacity) {
-      this.#entries.shift();
-      this.#dropped++;
-    }
   }
 
   get size(): number {
-    return this.#entries.length;
+    return this.#entries.size;
   }
 
   toJSON(): { dropped: number; exchanges: readonly ApiExchange[] } {
-    return { dropped: this.#dropped, exchanges: this.#entries };
+    return { dropped: this.#entries.dropped, exchanges: this.#entries.items };
   }
 }
 
