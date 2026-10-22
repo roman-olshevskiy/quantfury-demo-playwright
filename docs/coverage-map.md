@@ -9,7 +9,7 @@ consistency (UI vs. same payload), resilience (mocked failure modes).
 
 ## Live API (`tests/api`, project `api-live`)
 
-All API rows are automated (M1). Rows in other sections are planned.
+All rows are automated (M1).
 
 | ID     | Feature               | Risk | Check                                                                                                              | Kind                          | Tags                     | Test file                                                         |
 | ------ | --------------------- | ---- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------- | ------------------------ | ----------------------------------------------------------------- |
@@ -27,37 +27,42 @@ All API rows are automated (M1). Rows in other sections are planned.
 
 ## Live UI (`tests/ui`, project `ui-chromium`; `@smoke` also Firefox/WebKit)
 
-| ID    | Feature             | Risk | Check                                                                                | Kind     | Tags                    | Status  |
-| ----- | ------------------- | ---- | ------------------------------------------------------------------------------------ | -------- | ----------------------- | ------- |
-| UI-01 | Demo opens          | R1   | Trade screen ready; Watchlist enabled; Portfolio and Limit Orders disabled           | behavior | `@ui @live @smoke`      | planned |
-| UI-02 | Widgets render data | R1   | Momentum and Most Traded show instrument rows with prices                            | behavior | `@ui @live @smoke`      | planned |
-| UI-03 | Search and select   | R3   | Searching a known instrument shows it; selecting opens the instrument panel          | behavior | `@ui @live @smoke`      | planned |
-| UI-04 | Empty search        | R3   | Unknown query shows "No Results Matched" and Popular Searches                        | behavior | `@ui @live @regression` | planned |
-| UI-05 | Widget filters      | R1   | Top Gainers ↔ Top Losers switch changes the list                                     | behavior | `@ui @live @regression` | planned |
-| UI-06 | Reload state        | R8   | After reload the panel is closed, the default layout is shown, the device id is kept | behavior | `@ui @live @regression` | planned |
-| UI-07 | Real-time channel   | R9   | SignalR connection opens with the MessagePack handshake and receives frames          | behavior | `@ui @live @regression` | planned |
+All rows are automated (M2).
+
+| ID    | Feature             | Risk | Check                                                                                        | Kind     | Tags                    | Test file                                                |
+| ----- | ------------------- | ---- | -------------------------------------------------------------------------------------------- | -------- | ----------------------- | -------------------------------------------------------- |
+| UI-01 | Demo opens          | R1   | Trade screen ready; Watchlist enabled; Portfolio and Limit Orders disabled; search editable  | behavior | `@ui @live @smoke`      | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts) |
+| UI-02 | Widgets render data | R1   | Momentum and Most Traded rows have price (glyph, grouping) and change (`0.00%`) text         | behavior | `@ui @live @smoke`      | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts) |
+| UI-03 | Search and select   | R3   | "Apple" finds `AAPL.OQ`; selecting opens the panel with name, Last Price and a numeric price | behavior | `@ui @live @smoke`      | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts) |
+| UI-04 | Empty search        | R3   | Unknown query shows "No Results Matched", echoes the query, lists Popular Searches           | behavior | `@ui @live @regression` | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts) |
+| UI-05 | Widget filters      | R1   | Top Gainers → Top Losers changes the list; no instrument is in both                          | behavior | `@ui @live @regression` | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts) |
+| UI-06 | Reload state        | R8   | After reload the panel is closed and search is empty; the device id is kept                  | behavior | `@ui @live @regression` | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts) |
+| UI-07 | Real-time channel   | R9   | One SignalR hub connection, MessagePack handshake, frames received                           | behavior | `@ui @live @regression` | [realtime.spec.ts](../tests/ui/realtime.spec.ts)         |
 
 ## Integration (`tests/integration`, project `ui-chromium`)
 
-| ID     | Feature                         | Risk | Check                                                                                 | Kind        | Tags                 | Status  |
-| ------ | ------------------------------- | ---- | ------------------------------------------------------------------------------------- | ----------- | -------------------- | ------- |
-| INT-01 | API instrument is searchable    | R3   | An instrument from the `/instruments` payload the page received is found by search    | consistency | `@integration @live` | planned |
-| INT-02 | Panel matches instrument record | R4   | Name, short name and exchange in the panel match the captured record                  | consistency | `@integration @live` | planned |
-| INT-03 | Popular searches                | R3   | Empty-search Popular Searches equal `popularBySearchCategory.all` of the same payload | consistency | `@integration @live` | planned |
+All rows are automated (M2). Each test compares the UI with the `/v13/instruments` response the
+same page received.
+
+| ID     | Feature                         | Risk | Check                                                                                        | Kind        | Tags                 | Test file                                                                             |
+| ------ | ------------------------------- | ---- | -------------------------------------------------------------------------------------------- | ----------- | -------------------- | ------------------------------------------------------------------------------------- |
+| INT-01 | API instrument is searchable    | R3   | Searching a record's `snd` shows a result for its `sn` with `snd` and `n` (stock and crypto) | consistency | `@integration @live` | [instrument-consistency.spec.ts](../tests/integration/instrument-consistency.spec.ts) |
+| INT-02 | Panel matches instrument record | R4   | Panel name equals `n`; the price is drawn in the record's currency `ic`                      | consistency | `@integration @live` | [instrument-consistency.spec.ts](../tests/integration/instrument-consistency.spec.ts) |
+| INT-03 | Popular searches                | R3   | Empty-search Popular Searches equal `popularBySearchCategory.all`, in order                  | consistency | `@integration @live` | [instrument-consistency.spec.ts](../tests/integration/instrument-consistency.spec.ts) |
 
 ## Mocked UI (`tests/mocked`, project `ui-mocked`)
 
-| ID     | Feature                  | Risk | Check                                                                          | Kind       | Tags          | Status  |
-| ------ | ------------------------ | ---- | ------------------------------------------------------------------------------ | ---------- | ------------- | ------- |
-| MOC-01 | Empty widget data        | R7   | Empty `topGainers` response → widget shows no rows without breaking the page   | resilience | `@mocked @ui` | planned |
-| MOC-02 | HTTP error               | R7   | 500 from a widget endpoint → other widgets still render                        | resilience | `@mocked @ui` | planned |
-| MOC-03 | Business error envelope  | R7   | `isSuccess: false` from a widget endpoint is handled                           | resilience | `@mocked @ui` | planned |
-| MOC-04 | Slow response            | R7   | Delayed widget data → loading state, then data                                 | resilience | `@mocked @ui` | planned |
-| MOC-05 | Deterministic formatting | R4   | Fixed quote values render with the expected currency symbol, rounding and sign | behavior   | `@mocked @ui` | planned |
-| MOC-06 | Partial instrument data  | R7   | Instrument without optional keys still renders in search results               | resilience | `@mocked @ui` | planned |
+All rows are automated (M2). Expected reactions were observed with exploratory mocks before the
+tests were written; one endpoint is mocked per test, the rest is live.
 
-Exact expected UI reactions for MOC-01…04 are hypotheses until observed; each test documents the
-behavior it confirmed.
+| ID     | Feature                  | Risk | Check                                                                                                 | Kind       | Tags          | Test file                                                          |
+| ------ | ------------------------ | ---- | ----------------------------------------------------------------------------------------------------- | ---------- | ------------- | ------------------------------------------------------------------ |
+| MOC-01 | Empty widget data        | R7   | Empty `topGainers` → "0 Gainers", no rows; Most Traded unaffected                                     | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
+| MOC-02 | HTTP error               | R7   | HTTP 500 → "An error occurred, please try again"; Most Traded unaffected                              | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
+| MOC-03 | Business error envelope  | R7   | `isSuccess: false` → the envelope's `error` text is shown                                             | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
+| MOC-04 | Slow response            | R7   | Held response → no rows, no empty/error text while pending; rows after release                        | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
+| MOC-05 | Deterministic formatting | R4   | Hub stubbed, fixed quotes: `Χ1,234.50` / `3.46%` (USD), `81,234.57` / `1.50%` (USDT, negative change) | behavior   | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
+| MOC-06 | Partial instrument data  | R7   | `AAPL.OQ` without optional keys is still found and opens in the panel                                 | resilience | `@mocked @ui` | [instrument-list.spec.ts](../tests/mocked/instrument-list.spec.ts) |
 
 ## Not covered (and why)
 

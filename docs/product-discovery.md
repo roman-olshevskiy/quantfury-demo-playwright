@@ -48,6 +48,31 @@ Locator notes:
 - The chart is canvas-based inside an iframe; its candles cannot be checked through DOM text
   (requirements §11). Chart data can be checked through the `chart/web` HTTP payload instead.
 
+### Widget and panel behavior (observed in M2)
+
+- Widget roots: `widget_momentum`, `widget_news`, `widget_most_traded`, `widget_global_data`,
+  `widget_company_earnings`, `widget_dividends`. Momentum and Most Traded rows are
+  `role="button"` elements with `trades_instrument_{name,price,percent_change}_<shortName>`.
+- Both momentum lists (`topGainers`, `topLoosers`) are loaded at start-up; switching to Top Losers
+  sends no request. Under the "All" filter only entries flagged `showForAllShortcut: true` are
+  shown.
+- Change percentages are rendered **unsigned** with two decimals (`2.61%`); an arrow icon shows the
+  direction. Prices use en-US grouping (`Χ1,234.50`); USDT-quoted crypto pairs have no currency
+  symbol. Prices of instruments with closed markets may show `0.00` until quotes arrive.
+- Live quotes from the SignalR hub overwrite the HTTP `/v13/price` snapshot within seconds (seen
+  for crypto pairs).
+- Widget states for the momentum list: empty list → `0 Gainers`; HTTP 500 →
+  `An error occurred, please try again`; business error (`isSuccess: false`) → the envelope's
+  `error` text; pending response → spinner only. Other widgets are unaffected in every case.
+- Search: the dropdown lives inside the search `<form>`. Results are
+  `instrument_information_<shortName>` buttons; an unknown query shows "No Results Matched", the
+  query in `search_current_value` and "Popular Searches" (`popular_<shortName>_short_name`) in the
+  order of `popularBySearchCategory.all`. Search runs client-side; focusing it triggers a delta
+  `instruments?afterDate=` sync.
+- Instrument panel: name `#details_name`, price `#details_price` (the currency glyph is a sibling
+  span), SELL/BUY are `#sell` / `#buy` and are disabled with "Market Closed" when the exchange is
+  closed.
+
 ## 2. Entering demo mode
 
 Opening `/` without login enters demo mode directly. No consent banner or interstitial was shown
@@ -66,8 +91,8 @@ signal: analytics beacons and the WebSocket keep the page busy.
 | URL                    | `/`                                                                  | `/` (selecting an instrument does not change the URL)                                          |
 
 Initial load time to the Watchlist tab: ~2 s with third-party requests blocked, ~5–7.5 s with them
-allowed (Chromium, headless, local Windows machine). One out of ~8 loads stayed on a spinner for
-more than 10 s; it was not reproduced in 5 subsequent runs (see §12).
+allowed (Chromium, headless, local Windows machine). About 1 in 15–20 fresh loads takes 11–17 s
+instead (see §12, uncertainty 1).
 
 ## 4. Browser storage
 
@@ -242,8 +267,15 @@ its own device identity.
 
 ## 12. Uncertainties and assumptions
 
-1. **One stuck initial load** (spinner > 10 s) was observed once in ~8 loads and not reproduced.
-   Treated as an environment/product timing condition to watch in `docs/reliability.md`.
+1. **Slow start-up in ~5–7% of fresh loads.** Investigated in M2 with 70 controlled loads
+   (2026-10-22, Chromium, local machine): the spinner stays for 11–17 s, then the app continues
+   normally. Rates: 1/15 with all third-party hosts blocked, 1/15 with only Firebase allowed, 1/20
+   with nothing blocked, 1/20 in a timing probe — so it is **not caused by request blocking**.
+   The trade layout waits for the full `/v13/instruments` list: in one slow load that response
+   itself took 9.3 s on the server; in another it arrived after 0.96 s and the client still waited
+   ~15 s before requesting widget data. Classified as **product/environment behavior**. Tests wait
+   up to `timeouts.appStart` (30 s) for the layout and annotate starts slower than 6 s as
+   `slow-start`, so the rate stays visible in reports instead of being retried away.
 2. **Cloudflare** did not challenge headless Chromium from a residential IP. GitHub-hosted runners
    use datacenter IPs and may be challenged; this can only be confirmed in CI.
 3. **Rate limits** are unknown. Every fresh UI test downloads the ~1 MB instrument list; the
