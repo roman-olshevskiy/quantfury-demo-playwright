@@ -42,6 +42,8 @@ export default defineConfig(
   {
     files: ['**/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],
+    // Plain Node scripts (CI helpers, config).
+    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
   },
   prettier,
 );

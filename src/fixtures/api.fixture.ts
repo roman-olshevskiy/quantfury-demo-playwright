@@ -7,6 +7,7 @@ import { ApiTransport } from '../api/http/api-transport';
 import { demoHeaders, headersWithoutDemoIdentity } from '../api/http/demo-headers';
 import { ApiExchangeLog } from '../api/http/exchange-log';
 import { env } from '../config/env';
+import { ENVIRONMENT_ANNOTATION } from '../environment/markers';
 
 export interface ApiFixtures {
   /** Fresh demo identity per test (docs/product-discovery.md §9-10). */
@@ -35,6 +36,10 @@ export const apiTest = base.extend<ApiFixtures & InternalFixtures>({
     const log = new ApiExchangeLog();
     await use(log);
     if (testInfo.status !== testInfo.expectedStatus && log.size > 0) {
+      // A failure after a CDN block page is an environment condition, not a product defect.
+      for (const blocked of log.blocked) {
+        testInfo.annotations.push({ type: ENVIRONMENT_ANNOTATION, description: blocked });
+      }
       await testInfo.attach('api-exchanges.json', {
         body: JSON.stringify(log, null, 2),
         contentType: 'application/json',

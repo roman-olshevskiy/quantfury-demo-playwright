@@ -1,0 +1,88 @@
+name: Manual run
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Suite to run
+        type: choice
+        default: smoke
+        options: [smoke, api, ui, integration, mocked, regression, full]
+      browser:
+        description: Browser project (only for the smoke suite; other suites run in Chromium)
+        type: choice
+        default: chromium
+        options: [chromium, firefox, webkit, all]
+      workers:
+        description: Parallel workers (4 is allowed for the mocked suite only)
+        type: choice
+        default: '2'
+        options: ['1', '2', '4']
+
+# Hosts are not an input: runs always target the hosts configured in src/config/env.ts.
+
+concurrency:
+  group: manual-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    name: Resolve selection
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    outputs:
+      npm-script: ${{ steps.map.outputs.npm-script }}
+      extra-args: ${{ steps.map.outputs.extra-args }}
+      browsers: ${{ steps.map.outputs.browsers }}
+      mode: ${{ steps.map.outputs.mode }}
+    steps:
+      - id: map
+        env:
+          SUITE: ${{ inputs.suite }}
+          BROWSER: ${{ inputs.browser }}
+          WORKERS: ${{ inputs.workers }}
+        run: |
+          fail() { echo "::error::$1"; exit 1; }
+          if [ "$WORKERS" = "4" ] && [ "$SUITE" != "mocked" ]; then
+            fail "Live suites run with at most 2 workers against the public demo."
+          fi
+          if [ "$BROWSER" != "chromium" ] && [ "$SUITE" != "smoke" ]; then
+            fail "Firefox and WebKit are covered by the smoke suite only."
+          fi
+          # API suites are gates; UI suites are signals on GitHub-hosted runners (ADR 0001).
+          script="" args="" browsers="chromium" mode="signal"
+          case "$SUITE/$BROWSER" in
+            smoke/chromium)  script="test:smoke" ;;
+            smoke/firefox)   script="test:select"; args="--project=ui-firefox-smoke"; browsers="firefox" ;;
+            smoke/webkit)    script="test:select"; args="--project=ui-webkit-smoke"; browsers="webkit" ;;
+            smoke/all)       script="test:cross-browser"; browsers="chromium firefox webkit" ;;
+            api/*)           script="test:api"; browsers=""; mode="gate" ;;
+            ui/*)            script="test:ui" ;;
+            integration/*)   script="test:integration" ;;
+            mocked/*)        script="test:mocked" ;;
+            regression/*)    script="test:regression" ;;
+            full/*)          script="test:full" ;;
+            *)               fail "Unknown selection $SUITE/$BROWSER" ;;
+          esac
+          {
+            echo "npm-script=$script"
+            echo "extra-args=$args"
+            echo "browsers=$browsers"
+            echo "mode=$mode"
+          } >> "$GITHUB_OUTPUT"
+          echo "Selected: npm run $script -- $args (browsers: ${browsers:-none}, workers: $WORKERS, mode: $mode)"
+
+  run:
+    needs: resolve
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: manual-${{ inputs.suite }}-${{ inputs.browser }}
+      npm-script: ${{ needs.resolve.outputs.npm-script }}
+      extra-args: ${{ needs.resolve.outputs.extra-args }}
+      browsers: ${{ needs.resolve.outputs.browsers }}
+      mode: ${{ needs.resolve.outputs.mode }}
+      workers: ${{ fromJSON(inputs.workers) }}
+      timeout-minutes: 25
