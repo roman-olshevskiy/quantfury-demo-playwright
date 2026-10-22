@@ -9,8 +9,10 @@ import type {
   SearchCategoriesData,
 } from '../models/instrument';
 import type { ChartData, MarketSession, Quote } from '../models/market-data';
+import type { TradeHoldedItem } from '../models/market-insights';
 import type { NewsItem } from '../models/news';
 import { errorEnvelopeSchema, problemDetailsSchema, successEnvelope } from './common';
+import { tradeHoldedResponseSchema } from './market-insights.schema';
 import {
   instrumentDetailsResponseSchema,
   instrumentsResponseSchema,
@@ -46,6 +48,7 @@ export const validators = {
   chartResponse: ajv.compile<SuccessEnvelope<ChartData>>(chartResponseSchema),
   marketsResponse: ajv.compile<SuccessEnvelope<MarketSession[]>>(marketsResponseSchema),
   newsResponse: ajv.compile<SuccessEnvelope<NewsItem[]>>(newsResponseSchema),
+  tradeHoldedResponse: ajv.compile<SuccessEnvelope<TradeHoldedItem[]>>(tradeHoldedResponseSchema),
   errorEnvelope: ajv.compile<ErrorEnvelope>(errorEnvelopeSchema),
   problemDetails: ajv.compile<ProblemDetails>(problemDetailsSchema),
 };

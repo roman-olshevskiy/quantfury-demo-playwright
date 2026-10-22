@@ -11,4 +11,10 @@ export const apiPaths = {
   chart: '/v13/chart/web',
   markets: '/v13/markets',
   news: '/v13/news',
+  topGainers: '/v13/tradeHolded/topGainers',
+  topLosers: '/v13/tradeHolded/topLoosers',
+  mostTraded: '/v13/tradeHolded/mostTraded',
 } as const;
+
+/** SignalR hub on the demo API host (MessagePack protocol, docs/product-discovery.md §7). */
+export const realtimeHubPath = '/signalr/v13/QuantfuryHub';
