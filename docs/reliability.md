@@ -29,7 +29,9 @@ Each gate was exercised with a deliberate, temporary failure that was removed af
 
 | 2026-10-22 | PR #6, Pull request run #2 | `acf3c61` | static | passed (29 s) | — |
 | 2026-10-22 | same | `acf3c61` | live-smoke | 3/6 | **environment** — all 3 UI failures attributed automatically: `GET /css/fonts/UniNeueRegular_v39.woff2 → Cloudflare block page (HTTP 403, cf-ray …-IAD)` on `trading.quantfury.com`; API tests passed |
-| 2026-10-22 | same | `acf3c61` | mocked | not observed to completion (slow `apt` mirror during `playwright install --with-deps`) | — |
+| 2026-10-22 | same | `acf3c61` | mocked | 0/6 (8 m 25 s, most of it a slow `apt` mirror during `playwright install --with-deps`) | **environment** — all 6 attributed automatically: `/v13/instruments → Cloudflare block page (HTTP 403, cf-ray …-LAX, title "Attention Required! \| Cloudflare")` |
+| 2026-10-22 | PR #6, Pull request run #3 | `658d237` | static | passed (28 s) | — |
+| 2026-10-22 | same | `658d237` | live-api | 18/18 (24 s), 0 flaky, environment available | — (first green PR run, total 1 m 0 s) |
 
 Run #1: the pre-flight reported `available` because it probed only `searchCategories`, so the
 block was not classified. Follow-up changes (M3): the pre-flight also probes the instrument-list path;
