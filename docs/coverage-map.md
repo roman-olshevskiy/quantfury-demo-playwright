@@ -9,19 +9,21 @@ consistency (UI vs. same payload), resilience (mocked failure modes).
 
 ## Live API (`tests/api`, project `api-live`)
 
-| ID     | Feature               | Risk | Check                                                                                          | Kind                          | Tags                     | Status  |
-| ------ | --------------------- | ---- | ---------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------ | ------- |
-| API-01 | Demo bootstrap        | R1   | `users/demoapi` returns the demo API URL; headers required                                     | contract                      | `@api @live @smoke`      | planned |
-| API-02 | Instrument list       | R2   | Schema, unique `sn`, required keys, popular lists reference existing instruments               | contract, invariant           | `@api @live @smoke`      | planned |
-| API-03 | Instrument delta sync | R2   | `afterDate` in the future returns an empty `updated` list                                      | invariant                     | `@api @live @regression` | planned |
-| API-04 | Search categories     | R3   | Schema; every instrument's `sc` ids exist in the category list                                 | contract, invariant           | `@api @live @regression` | planned |
-| API-05 | Quotes                | R5   | Schema; `n` echoes the request; `b ≤ a`                                                        | contract, invariant           | `@api @live @smoke`      | planned |
-| API-06 | Quotes — negative     | R6   | Unknown name omitted; empty list → `ValidationFailed`                                          | negative                      | `@api @live @regression` | planned |
-| API-07 | Instrument details    | R4   | Known instrument returns details; unknown → `TradingInstrumentDetailsNotFound`                 | contract, negative            | `@api @live @regression` | planned |
-| API-08 | Historical bars       | R5   | Schema; OHLC invariants; bar period; bars within range; count bound; unknown → empty           | contract, invariant, negative | `@api @live @regression` | planned |
-| API-09 | Markets / schedules   | R5   | Schema; `startWork < endWork`; working interval consistent                                     | contract, invariant           | `@api @live @regression` | planned |
-| API-10 | News — validation     | R6   | Invalid `instrumentType` / non-numeric `newsAmount` → 400 problem details naming the parameter | negative                      | `@api @live @regression` | planned |
-| API-11 | Required headers      | R6   | Missing `custom-*` headers → 400 problem details                                               | negative                      | `@api @live @regression` | planned |
+All API rows are automated (M1). Rows in other sections are planned.
+
+| ID     | Feature               | Risk | Check                                                                                                              | Kind                          | Tags                     | Test file                                                         |
+| ------ | --------------------- | ---- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------- | ------------------------ | ----------------------------------------------------------------- |
+| API-01 | Demo bootstrap        | R1   | `users/demoapi` returns the configured demo API origin; version, CORS and nosniff headers                          | contract                      | `@api @live @smoke`      | [bootstrap.spec.ts](../tests/api/bootstrap.spec.ts)               |
+| API-02 | Instrument list       | R2   | Schema, full snapshot (> 2000), unique `sn`, popular lists reference existing instruments                          | contract, invariant           | `@api @live @smoke`      | [instruments.spec.ts](../tests/api/instruments.spec.ts)           |
+| API-03 | Instrument delta sync | R2   | `afterDate` in the future returns empty `updated`, `deleted`, `reseted`                                            | invariant                     | `@api @live @regression` | [instruments.spec.ts](../tests/api/instruments.spec.ts)           |
+| API-04 | Search categories     | R3   | Schema; unique ids; every instrument's `sc` ids exist in the category list                                         | contract, invariant           | `@api @live @regression` | [instruments.spec.ts](../tests/api/instruments.spec.ts)           |
+| API-05 | Quotes                | R5   | Schema; one quote per requested instrument; `p > 0`, `b ≤ a`, `l ≤ h`                                              | contract, invariant           | `@api @live @smoke`      | [market-data.spec.ts](../tests/api/market-data.spec.ts)           |
+| API-06 | Quotes — negative     | R6   | Unknown name omitted; empty list → `ValidationFailed`; string list → `StringContainsNotAllowedSymbols`             | negative                      | `@api @live @regression` | [market-data.spec.ts](../tests/api/market-data.spec.ts)           |
+| API-07 | Instrument details    | R4   | Known instrument returns details; unknown → `TradingInstrumentDetailsNotFound` (HTTP 200)                          | contract, negative            | `@api @live @regression` | [instruments.spec.ts](../tests/api/instruments.spec.ts)           |
+| API-08 | Historical bars       | R5   | Schema; OHLC invariants; 5-minute duration; within range; count bound; newest first; unknown → empty               | contract, invariant, negative | `@api @live @regression` | [market-data.spec.ts](../tests/api/market-data.spec.ts)           |
+| API-09 | Markets / schedules   | R5   | Schema; unique MICs; previous < current < next session; span ≥ working interval                                    | contract, invariant           | `@api @live @regression` | [market-data.spec.ts](../tests/api/market-data.spec.ts)           |
+| API-10 | News                  | R6   | Count ≤ `newsAmount`, unique ids, newest first; invalid `instrumentType` / `newsAmount` → 400 naming the parameter | contract, invariant, negative | `@api @live @regression` | [news.spec.ts](../tests/api/news.spec.ts)                         |
+| API-11 | Required headers      | R6   | Missing `custom-*` headers → 400 problem details (bootstrap and demo host)                                         | negative                      | `@api @live @regression` | [required-headers.spec.ts](../tests/api/required-headers.spec.ts) |
 
 ## Live UI (`tests/ui`, project `ui-chromium`; `@smoke` also Firefox/WebKit)
 
