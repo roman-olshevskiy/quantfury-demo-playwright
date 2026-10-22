@@ -1,4 +1,5 @@
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
+import { defineBddProject } from 'playwright-bdd';
 
 import { env } from './src/config/env';
 import { timeouts } from './src/config/timeouts';
@@ -67,6 +68,19 @@ export default defineConfig({
       name: 'ui-mocked',
       testDir: './tests/mocked',
       retries: 0,
+      use: { ...devices['Desktop Chrome'], viewport: desktop },
+    },
+    {
+      // Live BDD scenarios (ADR 0006). `npx bddgen` turns bdd/features into Playwright tests in
+      // .features-gen/ (generated, git-ignored, never edited by hand).
+      ...defineBddProject({
+        name: 'bdd',
+        features: 'bdd/features/**/*.feature',
+        featuresRoot: 'bdd/features',
+        steps: 'bdd/steps/**/*.ts',
+        missingSteps: 'fail-on-gen',
+      }),
+      retries: liveRetries,
       use: { ...devices['Desktop Chrome'], viewport: desktop },
     },
   ],

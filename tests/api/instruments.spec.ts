@@ -6,13 +6,9 @@ import { expectToMatchSchema } from '../../src/assertions/schema';
 import { env } from '../../src/config/env';
 import { knownInstruments, unknownInstrument } from '../../src/data/known-instruments';
 import { expect, test } from '../../src/fixtures';
+import { findDuplicates } from '../../src/utils/collections';
 
 const DAY_MS = 86_400_000;
-
-function duplicates(values: readonly string[]): string[] {
-  const seen = new Set<string>();
-  return values.filter((value) => (seen.has(value) ? true : (seen.add(value), false)));
-}
 
 test.describe('Instruments API', { tag: ['@api', '@live'] }, () => {
   test('API-02 full instrument list is consistent', { tag: '@smoke' }, async ({ api }) => {
@@ -34,7 +30,7 @@ test.describe('Instruments API', { tag: ['@api', '@live'] }, () => {
     });
 
     await test.step('short names are unique', () => {
-      expect(duplicates(shortNames), 'duplicated short names').toEqual([]);
+      expect(findDuplicates(shortNames), 'duplicated short names').toEqual([]);
     });
 
     await test.step('popular instruments exist in the list', () => {
@@ -77,7 +73,7 @@ test.describe('Instruments API', { tag: ['@api', '@live'] }, () => {
       expectToMatchSchema(instruments, validators.instrumentsResponse, 'instruments');
 
       const categoryIds = categories.data.searchCategories.map((category) => category.id);
-      expect(duplicates(categoryIds.map(String)), 'duplicated category ids').toEqual([]);
+      expect(findDuplicates(categoryIds.map(String)), 'duplicated category ids').toEqual([]);
 
       const knownIds = new Set(categoryIds);
       const orphans = instruments.data.updated

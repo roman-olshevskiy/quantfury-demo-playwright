@@ -35,20 +35,21 @@ flowchart TB
   reporting --> env
 ```
 
-| Layer                               | Responsibility                                                                                        | Does not                                   |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `tests/`                            | Scenario (Arrange–Act–Assert), business expectations, tags                                            | Build requests, know selectors             |
-| `src/fixtures/`                     | Create and dispose contexts, clients, page objects, mocks, diagnostics; attach diagnostics on failure | Assert business rules                      |
-| `src/ui/pages`, `src/ui/components` | Locators and user actions of the Trade screen                                                         | Contain assertions or waits on fixed times |
-| `src/ui/network`                    | Route mocks, bounded page diagnostics, WebSocket observation, response capture                        | Change product behavior outside one test   |
-| `src/api/clients`                   | Observed endpoints with typed parameters; return raw `APIResponse`                                    | Parse or validate bodies, retry            |
-| `src/api/http`                      | Transport with a redacted exchange log, required demo headers, JSON reading                           | Interpret status codes                     |
-| `src/api/models`, `src/api/schemas` | Compile-time types and runtime JSON Schemas of observed payloads                                      | Forbid unknown properties                  |
-| `src/assertions`                    | Narrow reusable checks with readable messages (`expectToMatchSchema` narrows `unknown`)               | Hide failures                              |
-| `src/data`                          | Test data (known instruments) and schema-validated mock builders                                      | Hold private data                          |
-| `src/config`                        | Validated configuration and per-kind timeouts                                                         | Contain hosts that were not observed       |
-| `src/environment`                   | Pre-flight availability check; recognize CDN block/challenge pages                                    | Bypass them                                |
-| `src/reporting`                     | Run summary (console, GitHub job summary) and `reports/run-verdict.json`                              | Change results                             |
+| Layer                               | Responsibility                                                                                                          | Does not                                                  |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `tests/`                            | Scenario (Arrange–Act–Assert), business expectations, tags                                                              | Build requests, know selectors                            |
+| `src/fixtures/`                     | Create and dispose contexts, clients, page objects, mocks, diagnostics; attach diagnostics on failure                   | Assert business rules                                     |
+| `src/ui/pages`, `src/ui/components` | Locators and user actions of the Trade screen                                                                           | Contain assertions or waits on fixed times                |
+| `src/ui/network`                    | Route mocks, bounded page diagnostics, WebSocket observation, response capture                                          | Change product behavior outside one test                  |
+| `src/api/clients`                   | Observed endpoints with typed parameters; return raw `APIResponse`                                                      | Parse or validate bodies, retry                           |
+| `src/api/http`                      | Transport with a redacted exchange log, required demo headers, JSON reading                                             | Interpret status codes                                    |
+| `src/api/models`, `src/api/schemas` | Compile-time types and runtime JSON Schemas of observed payloads                                                        | Forbid unknown properties                                 |
+| `src/assertions`                    | Narrow reusable checks with readable messages (`expectToMatchSchema` narrows `unknown`)                                 | Hide failures                                             |
+| `src/data`                          | Test data (known instruments) and schema-validated mock builders                                                        | Hold private data                                         |
+| `src/config`                        | Validated configuration and per-kind timeouts                                                                           | Contain hosts that were not observed                      |
+| `src/environment`                   | Pre-flight availability check; recognize CDN block/challenge pages                                                      | Bypass them                                               |
+| `src/reporting`                     | Run summary (console, GitHub job summary) and `reports/run-verdict.json`                                                | Change results                                            |
+| `bdd/features`, `bdd/steps`         | Gherkin scenarios and step definitions on the shared fixtures (`bdd/steps/fixtures.ts` merges them with playwright-bdd) | Contain page or HTTP logic; `.features-gen/` is generated |
 
 There is no `BasePage` and no generic wrapper around Playwright's API; page objects compose
 components.

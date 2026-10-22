@@ -32,6 +32,7 @@ for GitHub-hosted runners, so browsers cannot render the app there
 | Live API                     | yes                           | **gate** (PR, `main`, scheduled)      |
 | Live UI, integration, mocked | yes (required for UI changes) | scheduled **signal**, manual dispatch |
 | Cross-browser smoke          | yes                           | scheduled **signal**, manual dispatch |
+| BDD scenarios                | yes (`npm run test:bdd`)      | scheduled **signal**                  |
 
 ## 3. Risks and how they are covered
 
