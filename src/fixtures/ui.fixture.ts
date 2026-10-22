@@ -10,6 +10,7 @@ import { apiPaths } from '../api/paths';
 import { validators } from '../api/schemas/validators';
 import { env } from '../config/env';
 import { timeouts } from '../config/timeouts';
+import { ENVIRONMENT_ANNOTATION } from '../environment/markers';
 import { MockApi } from '../ui/network/mock-api';
 import { NetworkExpectations } from '../ui/network/network-expectations';
 import { PageDiagnostics } from '../ui/network/page-diagnostics';
@@ -86,7 +87,12 @@ export const uiTest = base.extend<UiFixtures, UiWorkerFixtures>({
     pageDiagnostics.start(page);
     await use(page);
     pageDiagnostics.stop();
+    await pageDiagnostics.settle();
     if (testInfo.status !== testInfo.expectedStatus) {
+      // A failure after a CDN block page is an environment condition, not a product defect.
+      for (const blocked of pageDiagnostics.blockedResponses) {
+        testInfo.annotations.push({ type: ENVIRONMENT_ANNOTATION, description: blocked });
+      }
       await testInfo.attach('page-diagnostics.json', {
         body: JSON.stringify(pageDiagnostics, null, 2),
         contentType: 'application/json',

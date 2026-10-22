@@ -1,0 +1,66 @@
+name: Scheduled
+
+# Non-blocking signal for the UI suites. On GitHub-hosted runners Cloudflare currently blocks the
+# web app's assets (docs/decisions/0001), so these jobs usually end with an "environment
+# unavailable" warning; a real test failure or a flaky test still fails the job. The live API
+# regression is a gate here as everywhere else.
+
+on:
+  # 14:30 UTC on weekdays: European and US exchanges are both open, so market-dependent checks
+  # (momentum lists, open/closed state) see trading-hours data. Crypto checks work at any time.
+  schedule:
+    - cron: '30 14 * * 1-5'
+
+concurrency:
+  group: scheduled
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  api-regression:
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: api-regression
+      npm-script: test:api
+      browsers: ''
+      workers: 2
+      mode: gate
+      timeout-minutes: 10
+
+  # The jobs below run one after another so the live environment never sees two at once.
+  mocked:
+    needs: api-regression
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: mocked
+      npm-script: test:mocked
+      workers: 4
+      mode: signal
+      timeout-minutes: 15
+
+  cross-browser-smoke:
+    needs: mocked
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: cross-browser-smoke
+      npm-script: test:cross-browser
+      browsers: chromium firefox webkit
+      workers: 2
+      mode: signal
+      timeout-minutes: 20
+
+  ui-regression:
+    needs: cross-browser-smoke
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: ui-regression
+      npm-script: test:select
+      extra-args: --project=ui-chromium --grep @regression|@integration
+      workers: 2
+      mode: signal
+      timeout-minutes: 25

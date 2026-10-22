@@ -1,0 +1,97 @@
+name: Playwright suite
+
+# Reusable: runs one npm test script against the public demo, keeps the diagnostics and decides
+# the job result (gate or signal, see .github/scripts/evaluate-run.mjs).
+
+on:
+  workflow_call:
+    inputs:
+      suite:
+        description: Name shown in the job title and artifact names.
+        required: true
+        type: string
+      npm-script:
+        description: npm script from package.json, e.g. test:api.
+        required: true
+        type: string
+      extra-args:
+        description: Extra Playwright CLI arguments (only from the calling workflows, never free text).
+        required: false
+        type: string
+        default: ''
+      browsers:
+        description: Playwright browsers to install; empty for API-only suites.
+        required: false
+        type: string
+        default: chromium
+      workers:
+        description: Parallel workers (live suites at most 2, mocked suite up to 4).
+        required: true
+        type: number
+      mode:
+        description: >-
+          gate = any test failure fails the job (blocking suites).
+          signal = failures caused only by the environment end as a warning (non-blocking suites).
+        required: false
+        type: string
+        default: gate
+      timeout-minutes:
+        required: false
+        type: number
+        default: 20
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: ${{ inputs.suite }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    # Concurrency is set by the calling workflows (one run per workflow and ref).
+    env:
+      WORKERS: ${{ inputs.workers }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        with:
+          browsers: ${{ inputs.browsers }}
+
+      - name: Run ${{ inputs.suite }}
+        id: tests
+        # The result is decided by the "Evaluate" step, after the artifacts are uploaded.
+        continue-on-error: true
+        env:
+          NPM_SCRIPT: ${{ inputs.npm-script }}
+          EXTRA_ARGS: ${{ inputs.extra-args }}
+        run: npm run "$NPM_SCRIPT" -- $EXTRA_ARGS
+
+      - name: Upload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: report-${{ inputs.suite }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            reports/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Upload traces and screenshots of failures
+        if: ${{ !cancelled() && steps.tests.outcome == 'failure' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results-${{ inputs.suite }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Evaluate (${{ inputs.mode }})
+        if: ${{ !cancelled() }}
+        env:
+          MODE: ${{ inputs.mode }}
+          OUTCOME: ${{ steps.tests.outcome }}
+        run: node .github/scripts/evaluate-run.mjs "$MODE" "$OUTCOME"

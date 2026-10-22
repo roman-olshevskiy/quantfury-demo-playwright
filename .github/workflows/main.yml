@@ -1,0 +1,31 @@
+name: Main
+
+# Blocking suites on GitHub-hosted runners: static checks and the full live API suite. UI suites
+# run in the scheduled workflow as a signal (docs/decisions/0001).
+
+on:
+  push:
+    branches: [main]
+
+# Queue pushes to main instead of cancelling: every merged commit gets a full result.
+concurrency:
+  group: main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    uses: ./.github/workflows/static-checks.yml
+
+  live-api:
+    needs: static
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: live-api
+      npm-script: test:api
+      browsers: ''
+      workers: 2
+      mode: gate
+      timeout-minutes: 10
