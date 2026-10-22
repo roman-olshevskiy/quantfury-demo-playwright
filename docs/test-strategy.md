@@ -87,7 +87,7 @@ Tags select suites through `--grep`; a test exists in exactly one directory.
 | Live API (`test:api`, 2 workers)                                        | `pull-request.yml`, `main.yml` | gate                               | Retries ≤ 1; a test passing only on retry fails the run                 |
 | Live API, then mocked, cross-browser smoke, UI regression + integration | `scheduled.yml`                | API gate, UI signal                | Weekdays 14:30 UTC (EU and US markets open); jobs run one after another |
 | Selected suite                                                          | `manual.yml`                   | API gate, UI signal                | Choice inputs only; live suites limited to 2 workers                    |
-| Live UI, integration, mocked, cross-browser                             | local                          | required before merging UI changes | See CONTRIBUTING (M4)                                                   |
+| Live UI, integration, mocked, cross-browser                             | local                          | required before merging UI changes | See [CONTRIBUTING](../CONTRIBUTING.md)                                  |
 
 **gate** — any failure fails the job. **signal** — failures caused only by the environment (the
 pre-flight stopped the run, or every failed test saw a CDN block or challenge page) end as a
