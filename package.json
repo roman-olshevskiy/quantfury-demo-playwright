@@ -1,6 +1,6 @@
 {
   "name": "quantfury-demo-playwright",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Independent portfolio test-automation framework (Playwright + TypeScript) for the public Quantfury demo mode.",
   "license": "MIT",

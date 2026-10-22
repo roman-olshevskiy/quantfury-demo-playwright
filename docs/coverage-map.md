@@ -1,6 +1,7 @@
 # Coverage map
 
-Feature / risk → planned tests → kind of check. Risk IDs refer to
+Feature / risk → tests → kind of check. Where each suite runs (locally, CI gate, CI signal) is in
+[test-strategy.md §2](test-strategy.md#2-scope). Risk IDs refer to
 [test-strategy.md §3](test-strategy.md#3-risks-and-how-they-are-covered). Only behavior confirmed
 in [product-discovery.md](product-discovery.md) is listed. Status is updated as tests land.
 

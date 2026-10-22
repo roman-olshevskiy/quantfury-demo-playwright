@@ -10,8 +10,19 @@ Independent portfolio project: a test-automation framework for the public demo m
 > with or endorsed by Quantfury. It only exercises the publicly available demo mode, without
 > accounts, credentials or real financial operations.
 
-**Status:** work in progress — M3 done (suites, GitHub Actions, quality gates, reporting).
-Repeatability results, ADRs and the v1.0.0 release follow in M4.
+**Status:** v1.0.0 — see the [release notes](docs/release-notes/v1.0.0.md).
+
+## What it covers
+
+| Suite                                    | Tests | What it checks                                                                                                                                                                       |
+| ---------------------------------------- | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Live HTTP API (`tests/api`)              |    18 | Contracts (JSON Schema), business invariants and error handling of the demo API: bootstrap, instruments, search categories, quotes, historical bars, markets, news, required headers |
+| Live UI (`tests/ui`)                     |     7 | Demo opens with restricted trading tabs, widgets, search and selection, empty search, list switching, reload state, real-time (SignalR) connection                                   |
+| UI/API integration (`tests/integration`) |     3 | The UI against the API response the same page received: searchability, panel attributes, popular searches                                                                            |
+| Mocked UI (`tests/mocked`)               |     6 | Empty, HTTP-error, business-error and slow responses, exact formatting, partial data — one endpoint mocked per test                                                                  |
+
+Scope: the public demo mode only — no accounts, no real financial operations, no load or security
+testing. Details: [test strategy](docs/test-strategy.md), [coverage map](docs/coverage-map.md).
 
 ## Stack
 
@@ -41,15 +52,34 @@ npm run test:api
 npm run report
 ```
 
-On Linux CI runners install browser OS dependencies as well:
+On Linux (and in CI) install browser OS dependencies as well:
 
 ```bash
 npx playwright install --with-deps
 ```
 
+### Node.js version on Windows
+
+The project needs Node.js 24.13.0 (`.nvmrc`; `engines` allows `>=24.13.0 <25`). With a version
+manager:
+
+```bash
+fnm use
+```
+
+(fnm reads `.nvmrc`), or with nvm-windows:
+
+```bash
+nvm install 24.13.0
+```
+
+followed by `nvm use 24.13.0`. Without a version manager, install Node.js 24 LTS from
+[nodejs.org](https://nodejs.org/).
+
 ## Configuration
 
-Copy `.env.example` to `.env` to override defaults. Every variable is validated (zod) before a run;
+Copy `.env.example` to `.env` to override defaults (`copy .env.example .env` on Windows,
+`cp .env.example .env` elsewhere). Every variable is validated (zod) before a run;
 an invalid value stops the run with a message naming the variable.
 
 | Variable             | Default                          | Notes                          |
@@ -92,6 +122,31 @@ Defined per kind in [src/config/timeouts.ts](src/config/timeouts.ts) instead of 
 
 Select by tag with `--grep`, for example `npx playwright test --project=api-live --grep @regression`.
 The full browser matrix runs only through `test:cross-browser`, never by default.
+
+### VS Code
+
+Open the folder and accept the recommended extensions (`.vscode/extensions.json`): Playwright
+Test for VS Code, ESLint, Prettier, EditorConfig. The Testing view then lists every project and
+test; run or debug a single test from the gutter icon. Formatting on save and ESLint fixes are
+configured in `.vscode/settings.json`. Nothing depends on VS Code: every check also runs from the
+CLI.
+
+### Debugging
+
+```bash
+npx playwright test tests/ui/asset-search.spec.ts --project=ui-chromium --debug
+```
+
+runs one file in the Playwright Inspector (`-g "UI-03"` narrows it to one test). `npm run
+test:headed` shows the browser, `npm run test:ui-mode` opens UI mode, and `npm run test:trace`
+records a trace for every test without retries. Open a trace with
+
+```bash
+npx playwright show-trace test-results/<test-folder>/trace.zip
+```
+
+or from the HTML report (`npm run report`). Failed tests also carry `api-exchanges.json`,
+`page-diagnostics.json` and, for mocked tests, `mocked-requests.json` in the report.
 
 Every run starts with a pre-flight availability check of the three demo hosts. If the demo cannot
 be used from your machine or runner, the run stops with `ENVIRONMENT UNAVAILABLE (<reason>)`
@@ -162,8 +217,8 @@ src/
   assertions/  expectToMatchSchema (narrows unknown → model), HTTP helpers
   fixtures/    typed fixtures: API (device id, request context, clients) and UI (page, mocks,
                diagnostics), merged into one `test`
-  environment/ pre-flight availability check (globalSetup)
-  reporting/   run summary reporter (console + GitHub job summary)
+  environment/ pre-flight availability check (globalSetup), CDN block/challenge detection
+  reporting/   run summary reporter (console, GitHub job summary, run verdict)
   quality/     quarantine helper
   ui/
     pages/       TradePage (the demo entry point)
@@ -191,15 +246,40 @@ Isolation and diagnostics:
   requests still in flight and WebSocket frame counts (bounded, redacted; failures provoked by a
   mock are labelled as expected). Mocked tests also attach `mocked-requests.json`.
 
+## Live environment limitations
+
+- The demo is a shared public service: live runs use at most 2 workers and are never looped.
+- Prices, gainers, news and calendars change constantly; tests assert rules that always hold,
+  never live values. Some lists depend on trading hours.
+- About 1 in 15–20 fresh loads takes 11–17 s to render (product behavior); such tests are
+  annotated `slow-start`.
+- From datacenter IPs (for example GitHub-hosted runners) Cloudflare blocks the web app's assets;
+  UI suites therefore run locally ([ADR 0001](docs/decisions/0001-github-hosted-ci-gates-api-only.md)).
+- WebSocket messages (binary MessagePack) are not decoded; the chart canvas is not checked
+  visually.
+
+## Troubleshooting
+
+| Symptom                                                                                 | Cause and fix                                                                                                                                 |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Executable doesn't exist at …ms-playwright…`                                           | Browsers not installed for this Playwright version: `npx playwright install`                                                                  |
+| Browser fails to start on Linux (missing `.so` libraries)                               | OS dependencies missing: `npx playwright install --with-deps`                                                                                 |
+| `Invalid test configuration: … at WORKERS` (or another variable)                        | A value in `.env` or the environment is out of range; see `.env.example`                                                                      |
+| `ENVIRONMENT UNAVAILABLE (unreachable)`                                                 | The demo hosts cannot be reached from this network (offline, proxy, firewall). Check access to the three hosts in `reports/environment.json`. |
+| `ENVIRONMENT UNAVAILABLE (bot-protection)` or tests "Failed because of the environment" | Cloudflare blocks or challenges this network. Run from a regular network; do not try to work around the protection.                           |
+| Trade screen sometimes takes > 10 s                                                     | Known start-up stall; see `slow-start` annotations and [discovery §12](docs/product-discovery.md#12-uncertainties-and-assumptions)            |
+
 ## Documentation
 
 - [Requirements](docs/requirements.md)
 - [Product discovery](docs/product-discovery.md)
+- [Architecture](docs/architecture.md)
 - [Test strategy](docs/test-strategy.md)
 - [Coverage map](docs/coverage-map.md)
 - [Reliability](docs/reliability.md)
-- [Decisions (ADRs)](docs/decisions/)
-- [Release notes v1.0.0 (draft)](docs/release-notes/v1.0.0.md)
+- [Decisions (ADRs)](docs/decisions/README.md)
+- [Release notes v1.0.0](docs/release-notes/v1.0.0.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## License
 
