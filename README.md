@@ -20,6 +20,7 @@ Independent portfolio project: a test-automation framework for the public demo m
 | Live UI (`tests/ui`)                     |     9 | Demo opens with restricted trading tabs, widgets, search and selection, empty search, list switching, reload state, real-time (SignalR) connection, accessibility smoke (axe, WCAG 2.1 AA) against a documented baseline |
 | UI/API integration (`tests/integration`) |     3 | The UI against the API response the same page received: searchability, panel attributes, popular searches                                                                                                                |
 | Mocked UI (`tests/mocked`)               |     6 | Empty, HTTP-error, business-error and slow responses, exact formatting, partial data — one endpoint mocked per test                                                                                                      |
+| BDD (`bdd/features`)                     |     5 | Business-level scenarios in Gherkin (demo access, instrument search, market momentum, instrument catalogue) on the same fixtures and page objects ([ADR 0006](docs/decisions/0006-bdd-scope.md))                         |
 
 Scope: the public demo mode only — no accounts, no real financial operations, no load or security
 testing. Details: [test strategy](docs/test-strategy.md), [coverage map](docs/coverage-map.md).
@@ -37,6 +38,7 @@ testing. Details: [test strategy](docs/test-strategy.md), [coverage map](docs/co
 | Ajv                  | 8.20.0 (+ ajv-formats 3.0.1)     |
 | zod / dotenv         | 4.6.5 / 18.0.5                   |
 | @axe-core/playwright | 4.13.0                           |
+| playwright-bdd       | 9.2.1                            |
 
 ## Quick start
 
@@ -115,6 +117,7 @@ Defined per kind in [src/config/timeouts.ts](src/config/timeouts.ts) instead of 
 | `npm run test:integration`                                           | UI/API consistency tests, Chromium                |
 | `npm run test:mocked`                                                | Mocked UI suite                                   |
 | `npm run test:a11y`                                                  | Accessibility smoke (`@a11y`), Chromium           |
+| `npm run test:bdd`                                                   | Generates (`bddgen`) and runs the BDD scenarios   |
 | `npm run test:regression`                                            | `@regression` tests, API and Chromium             |
 | `npm run test:cross-browser`                                         | `@smoke` UI tests in Chromium, Firefox and WebKit |
 | `npm run test:full`                                                  | API, Chromium UI + integration, mocked            |
@@ -243,6 +246,9 @@ tests/
   ui/           live UI suite
   integration/  UI vs. the API payload the page received
   mocked/       UI with one endpoint mocked per test
+bdd/
+  features/     Gherkin feature files (English)
+  steps/        step definitions on the shared fixtures; .features-gen/ is generated
 ```
 
 Isolation and diagnostics:

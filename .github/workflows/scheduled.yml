@@ -64,3 +64,14 @@ jobs:
       workers: 2
       mode: signal
       timeout-minutes: 25
+
+  bdd:
+    needs: ui-regression
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: bdd
+      npm-script: test:bdd
+      workers: 2
+      mode: signal
+      timeout-minutes: 15

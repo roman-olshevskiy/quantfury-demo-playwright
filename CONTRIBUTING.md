@@ -71,6 +71,17 @@ Where things go:
 | A recurring check              | `src/assertions/`                                                   |
 | A new decision with trade-offs | A new ADR in `docs/decisions/`                                      |
 
+## BDD scenarios
+
+- Feature files in `bdd/features` are English and describe what a visitor does and sees, not
+  how the page is built ([ADR 0006](docs/decisions/0006-bdd-scope.md)).
+- Step definitions in `bdd/steps` only call page objects, API clients and assertions through
+  the shared fixtures; put new logic there, not in a step.
+- Never edit `.features-gen/`; `npm run test:bdd` regenerates it, and an undefined step fails
+  generation with a ready-to-paste snippet.
+- Add a scenario only when it helps a non-engineer understand coverage; detailed and edge-case
+  checks belong in `tests/`.
+
 ## Flaky or broken tests
 
 - A test that passes only on retry **fails** CI. Fix the cause; do not add retries, longer global

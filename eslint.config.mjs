@@ -6,7 +6,14 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['node_modules/', 'playwright-report/', 'test-results/', 'blob-report/', 'reports/'],
+    ignores: [
+      'node_modules/',
+      'playwright-report/',
+      'test-results/',
+      'blob-report/',
+      'reports/',
+      '.features-gen/',
+    ],
   },
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
@@ -29,7 +36,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['tests/**/*.ts'],
+    files: ['tests/**/*.ts', 'bdd/**/*.ts'],
     extends: [playwright.configs['flat/recommended']],
     rules: {
       'playwright/no-wait-for-timeout': 'error',
@@ -50,6 +57,12 @@ export default defineConfig(
         },
       ],
     },
+  },
+  {
+    // Step bodies run inside the tests that bddgen generates from the feature files, so their
+    // assertions are not "standalone" even though the plugin cannot see the enclosing test.
+    files: ['bdd/steps/**/*.ts'],
+    rules: { 'playwright/no-standalone-expect': 'off' },
   },
   {
     files: ['**/*.mjs'],

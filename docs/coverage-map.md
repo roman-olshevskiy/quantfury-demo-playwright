@@ -71,6 +71,19 @@ tests were written; one endpoint is mocked per test, the rest is live.
 | MOC-05 | Deterministic formatting | R4   | Hub stubbed, fixed quotes: `Χ1,234.50` / `3.46%` (USD), `81,234.57` / `1.50%` (USDT, negative change) | behavior   | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
 | MOC-06 | Partial instrument data  | R7   | `AAPL.OQ` without optional keys is still found and opens in the panel                                 | resilience | `@mocked @ui` | [instrument-list.spec.ts](../tests/mocked/instrument-list.spec.ts) |
 
+## BDD scenarios (`bdd/features`, project `bdd`)
+
+Communication layer ([ADR 0006](decisions/0006-bdd-scope.md)): the scenarios restate behaviors
+already covered above in business language; they are not counted as additional coverage.
+
+| Feature file                                                                 | Scenario                                            | Mirrors | Tags                     |
+| ---------------------------------------------------------------------------- | --------------------------------------------------- | ------- | ------------------------ |
+| [demo-access.feature](../bdd/features/demo-access.feature)                   | A visitor enters the demo without an account        | UI-01   | `@ui @live @smoke`       |
+| [instrument-search.feature](../bdd/features/instrument-search.feature)       | Find a company by name and inspect it               | UI-03   | `@ui @live @regression`  |
+| [instrument-search.feature](../bdd/features/instrument-search.feature)       | An unknown search term suggests popular instruments | UI-04   | `@ui @live @regression`  |
+| [market-momentum.feature](../bdd/features/market-momentum.feature)           | Top losers are a different list from top gainers    | UI-05   | `@ui @live @regression`  |
+| [instrument-catalogue.feature](../bdd/features/instrument-catalogue.feature) | The catalogue is complete and consistent            | API-02  | `@api @live @regression` |
+
 ## Not covered (and why)
 
 | Area                                      | Reason                                                                      |

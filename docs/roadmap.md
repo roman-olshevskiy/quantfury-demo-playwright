@@ -5,11 +5,12 @@ Planned P1 work (requirements §25–26). One branch and one PR per item, each c
 
 ## Progress
 
-| #   | Status                                                                                                                                                        |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Done (PR #9): `.github/dependabot.yml`, blocking `Dependency audit` job (`npm run audit:deps`)                                                                |
-| 2   | Done on `test/a11y-smoke`: `@axe-core/playwright` 4.13.0, UI-08/UI-09, baseline of 3 known rules in `src/data/accessibility-baseline.ts`, `npm run test:a11y` |
-| 3–7 | Not started                                                                                                                                                   |
+| #   | Status                                                                                                                                                                 |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Done (PR #9): `.github/dependabot.yml`, blocking `Dependency audit` job (`npm run audit:deps`)                                                                         |
+| 2   | Done (PR #12): `@axe-core/playwright` 4.13.0, UI-08/UI-09, baseline of 3 known rules in `src/data/accessibility-baseline.ts`, `npm run test:a11y`                      |
+| 3   | Done on `test/bdd`: `playwright-bdd` 9.2.1, 5 scenarios in 4 features, steps on the shared fixtures, project `bdd`, `npm run test:bdd`, scheduled signal job, ADR 0006 |
+| 4–7 | Not started                                                                                                                                                            |
 
 ## Order and scope
 
