@@ -1,0 +1,35 @@
+name: Scheduled
+
+on:
+  # 14:30 UTC on weekdays: European and US exchanges are both open, so market-dependent checks
+  # (momentum lists, open/closed state) see trading-hours data. Crypto checks work at any time.
+  schedule:
+    - cron: '30 14 * * 1-5'
+
+concurrency:
+  group: scheduled
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  cross-browser-smoke:
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: cross-browser-smoke
+      npm-script: test:cross-browser
+      browsers: chromium firefox webkit
+      workers: 2
+      timeout-minutes: 20
+
+  # Runs after the smoke job so the live environment never sees both at once.
+  regression:
+    needs: cross-browser-smoke
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: regression
+      npm-script: test:regression
+      workers: 2
+      timeout-minutes: 25

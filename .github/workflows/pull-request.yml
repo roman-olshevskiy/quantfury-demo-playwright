@@ -1,0 +1,35 @@
+name: Pull request
+
+on:
+  pull_request:
+    branches: [main]
+
+# A new push to the PR cancels the stale run.
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    uses: ./.github/workflows/static-checks.yml
+
+  mocked:
+    needs: static
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: mocked
+      npm-script: test:mocked
+      workers: 4
+      timeout-minutes: 15
+
+  live-smoke:
+    needs: static
+    uses: ./.github/workflows/playwright.yml
+    with:
+      suite: live-smoke
+      npm-script: test:smoke
+      workers: 2
+      timeout-minutes: 15
