@@ -1,5 +1,9 @@
 name: Pull request
 
+# Blocking gates only. UI suites cannot run on GitHub-hosted runners: Cloudflare answers the web
+# app's assets with HTTP 403 for these runners (docs/decisions/0001). They run locally and in the
+# scheduled workflow as a non-blocking signal.
+
 on:
   pull_request:
     branches: [main]
@@ -16,20 +20,13 @@ jobs:
   static:
     uses: ./.github/workflows/static-checks.yml
 
-  mocked:
+  live-api:
     needs: static
     uses: ./.github/workflows/playwright.yml
     with:
-      suite: mocked
-      npm-script: test:mocked
-      workers: 4
-      timeout-minutes: 15
-
-  live-smoke:
-    needs: static
-    uses: ./.github/workflows/playwright.yml
-    with:
-      suite: live-smoke
-      npm-script: test:smoke
+      suite: live-api
+      npm-script: test:api
+      browsers: ''
       workers: 2
-      timeout-minutes: 15
+      mode: gate
+      timeout-minutes: 10

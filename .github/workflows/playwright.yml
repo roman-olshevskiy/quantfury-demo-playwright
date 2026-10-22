@@ -1,6 +1,7 @@
 name: Playwright suite
 
-# Reusable: runs one npm test script against the public demo and keeps the diagnostics.
+# Reusable: runs one npm test script against the public demo, keeps the diagnostics and decides
+# the job result (gate or signal, see .github/scripts/evaluate-run.mjs).
 
 on:
   workflow_call:
@@ -10,7 +11,7 @@ on:
         required: true
         type: string
       npm-script:
-        description: npm script from package.json, e.g. test:smoke.
+        description: npm script from package.json, e.g. test:api.
         required: true
         type: string
       extra-args:
@@ -19,7 +20,7 @@ on:
         type: string
         default: ''
       browsers:
-        description: Playwright browsers to install.
+        description: Playwright browsers to install; empty for API-only suites.
         required: false
         type: string
         default: chromium
@@ -27,6 +28,13 @@ on:
         description: Parallel workers (live suites at most 2, mocked suite up to 4).
         required: true
         type: number
+      mode:
+        description: >-
+          gate = any test failure fails the job (blocking suites).
+          signal = failures caused only by the environment end as a warning (non-blocking suites).
+        required: false
+        type: string
+        default: gate
       timeout-minutes:
         required: false
         type: number
@@ -53,11 +61,12 @@ jobs:
           browsers: ${{ inputs.browsers }}
 
       - name: Run ${{ inputs.suite }}
+        id: tests
+        # The result is decided by the "Evaluate" step, after the artifacts are uploaded.
+        continue-on-error: true
         env:
           NPM_SCRIPT: ${{ inputs.npm-script }}
           EXTRA_ARGS: ${{ inputs.extra-args }}
-        # The pre-flight check (src/environment/global-setup.ts) fails the run with
-        # "ENVIRONMENT UNAVAILABLE" when the demo cannot be reached; that is not a product defect.
         run: npm run "$NPM_SCRIPT" -- $EXTRA_ARGS
 
       - name: Upload report
@@ -72,10 +81,17 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload traces and screenshots of failures
-        if: ${{ failure() }}
+        if: ${{ !cancelled() && steps.tests.outcome == 'failure' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: test-results-${{ inputs.suite }}-${{ github.run_attempt }}
           path: test-results/
           retention-days: 14
           if-no-files-found: ignore
+
+      - name: Evaluate (${{ inputs.mode }})
+        if: ${{ !cancelled() }}
+        env:
+          MODE: ${{ inputs.mode }}
+          OUTCOME: ${{ steps.tests.outcome }}
+        run: node .github/scripts/evaluate-run.mjs "$MODE" "$OUTCOME"

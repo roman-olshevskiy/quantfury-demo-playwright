@@ -1,5 +1,8 @@
 name: Main
 
+# Blocking suites on GitHub-hosted runners: static checks and the full live API suite. UI suites
+# run in the scheduled workflow as a signal (docs/decisions/0001).
+
 on:
   push:
     branches: [main]
@@ -16,11 +19,13 @@ jobs:
   static:
     uses: ./.github/workflows/static-checks.yml
 
-  full-chromium:
+  live-api:
     needs: static
     uses: ./.github/workflows/playwright.yml
     with:
-      suite: full-chromium
-      npm-script: test:full
+      suite: live-api
+      npm-script: test:api
+      browsers: ''
       workers: 2
-      timeout-minutes: 25
+      mode: gate
+      timeout-minutes: 10

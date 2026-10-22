@@ -1,4 +1,4 @@
-import { appendFile, readFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 
 import type {
   FullResult,
@@ -17,6 +17,20 @@ interface Annotated {
 }
 
 const MAX_LISTED = 10;
+
+export const RUN_VERDICT_PATH = 'reports/run-verdict.json';
+
+/** Written after every run; CI uses it to tell product failures from environment failures. */
+export interface RunVerdict {
+  status: FullResult['status'];
+  passed: number;
+  failed: number;
+  /** Failed tests attributed to the environment (CDN block page, challenge). */
+  environmentFailures: number;
+  flaky: number;
+  /** The pre-flight check stopped the run before any test. */
+  environmentUnavailable: boolean;
+}
 
 /**
  * Prints a short run summary and, on GitHub Actions, writes it to the job summary: outcome counts
@@ -94,6 +108,18 @@ export default class SummaryReporter implements Reporter {
     console.log(`\n${markdown}`);
     const summaryFile = process.env.GITHUB_STEP_SUMMARY;
     if (summaryFile !== undefined && summaryFile !== '') await appendFile(summaryFile, markdown);
+
+    // Machine-readable verdict for CI (see .github/scripts/evaluate-run.mjs).
+    const verdict: RunVerdict = {
+      status: result.status,
+      passed: outcomes.expected,
+      failed: outcomes.unexpected,
+      environmentFailures: environmentFailures.length,
+      flaky: outcomes.flaky,
+      environmentUnavailable: this.#environmentError !== undefined,
+    };
+    await mkdir('reports', { recursive: true });
+    await writeFile(RUN_VERDICT_PATH, JSON.stringify(verdict, null, 2));
   }
 
   printsToStdio(): boolean {
