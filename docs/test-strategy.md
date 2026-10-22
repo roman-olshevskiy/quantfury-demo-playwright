@@ -22,6 +22,17 @@ Out of scope: login/registration, other routes (`/account`, `/settings`, …), t
 are disabled in demo mode), device-registration and watchlist write endpoints, WebSocket message
 content (binary MessagePack, see discovery §7), load, security scanning, real devices.
 
+**Where each suite runs.** The Cloudflare layer in front of the demo blocks the web app's assets
+for GitHub-hosted runners, so browsers cannot render the app there
+([ADR 0001](decisions/0001-github-hosted-ci-gates-api-only.md)):
+
+| Suite                        | Local (residential network)   | GitHub-hosted CI                      |
+| ---------------------------- | ----------------------------- | ------------------------------------- |
+| Static checks                | yes                           | **gate** (PR, `main`)                 |
+| Live API                     | yes                           | **gate** (PR, `main`, scheduled)      |
+| Live UI, integration, mocked | yes (required for UI changes) | scheduled **signal**, manual dispatch |
+| Cross-browser smoke          | yes                           | scheduled **signal**, manual dispatch |
+
 ## 3. Risks and how they are covered
 
 | ID  | Risk                                                                     | Primary coverage                                         | Secondary coverage                |
@@ -70,14 +81,17 @@ Tags select suites through `--grep`; a test exists in exactly one directory.
 
 ## 6. Quality gates
 
-| Gate                                    | Workflow           | Blocks a PR | Notes                                                   |
-| --------------------------------------- | ------------------ | ----------- | ------------------------------------------------------- |
-| `format:check`, `lint`, `typecheck`     | `pull-request.yml` | Yes         | Zero errors                                             |
-| Mocked suite (`test:mocked`, 4 workers) | `pull-request.yml` | Yes         | Retries 0                                               |
-| Live smoke (`test:smoke`, 2 workers)    | `pull-request.yml` | Yes         | Retries ≤ 1; a test passing only on retry fails the run |
-| Full Chromium (`test:full`, 2 workers)  | `main.yml`         | Post-merge  | API + UI + integration + mocked                         |
-| Cross-browser smoke, then regression    | `scheduled.yml`    | No (signal) | Weekdays 14:30 UTC (EU and US markets open)             |
-| Selected suite                          | `manual.yml`       | No          | Choice inputs only; live suites limited to 2 workers    |
+| Check                                                                   | Workflow                       | Mode                               | Notes                                                                   |
+| ----------------------------------------------------------------------- | ------------------------------ | ---------------------------------- | ----------------------------------------------------------------------- |
+| `format:check`, `lint`, `typecheck`                                     | `pull-request.yml`, `main.yml` | gate                               | Zero errors                                                             |
+| Live API (`test:api`, 2 workers)                                        | `pull-request.yml`, `main.yml` | gate                               | Retries ≤ 1; a test passing only on retry fails the run                 |
+| Live API, then mocked, cross-browser smoke, UI regression + integration | `scheduled.yml`                | API gate, UI signal                | Weekdays 14:30 UTC (EU and US markets open); jobs run one after another |
+| Selected suite                                                          | `manual.yml`                   | API gate, UI signal                | Choice inputs only; live suites limited to 2 workers                    |
+| Live UI, integration, mocked, cross-browser                             | local                          | required before merging UI changes | See CONTRIBUTING (M4)                                                   |
+
+**gate** — any failure fails the job. **signal** — failures caused only by the environment (the
+pre-flight stopped the run, or every failed test saw a CDN block or challenge page) end as a
+warning; a real failure or a flaky test still fails the job. Signal jobs never block a merge.
 
 Mechanisms (all verified with controlled failures, see [reliability.md](reliability.md)):
 

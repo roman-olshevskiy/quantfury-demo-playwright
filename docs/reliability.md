@@ -27,14 +27,26 @@ Each gate was exercised with a deliberate, temporary failure that was removed af
 | 2026-10-22 | same                       | `45eff9f` | mocked     | 0/6           | **environment** — the worker-scoped instrument snapshot received HTTP 403 with an HTML page (Cloudflare-style error template) from `n1.trdngbcknd.com/v13/instruments`                                                                                  |
 | 2026-10-22 | same                       | `45eff9f` | live-smoke | 3/6           | API tests passed (incl. the full instrument list); the 3 UI tests never rendered the trade layout within 30 s, also on retry. **environment (suspected)** — the same block, or a challenge on the web app page for headless Chromium on a datacenter IP |
 
-The pre-flight reported `available` because it probed only `searchCategories`, so the block was
-not classified. Follow-up changes (M3): the pre-flight also probes the instrument-list path;
+| 2026-10-22 | PR #6, Pull request run #2 | `acf3c61` | static | passed (29 s) | — |
+| 2026-10-22 | same | `acf3c61` | live-smoke | 3/6 | **environment** — all 3 UI failures attributed automatically: `GET /css/fonts/UniNeueRegular_v39.woff2 → Cloudflare block page (HTTP 403, cf-ray …-IAD)` on `trading.quantfury.com`; API tests passed |
+| 2026-10-22 | same | `acf3c61` | mocked | not observed to completion (slow `apt` mirror during `playwright install --with-deps`) | — |
+
+Run #1: the pre-flight reported `available` because it probed only `searchCategories`, so the
+block was not classified. Follow-up changes (M3): the pre-flight also probes the instrument-list path;
 CDN block and challenge pages are recognized in the pre-flight, the API exchange log, the page
 diagnostics and the instrument snapshot; a failed test that saw one is annotated `environment`,
 and the run summary counts and lists those failures with path, status, cf-ray and page title.
 Verified locally with simulated block pages: a challenged main document stalls start-up and is
 reported as "Failed because of the environment", exit code 1; blocked API or bootstrap
 responses alone do not stop the app from rendering.
+
+Run #2 confirmed the block for the web app's assets on GitHub-hosted runners. Decision:
+[ADR 0001](decisions/0001-github-hosted-ci-gates-api-only.md) — static checks and the live API
+suite are the CI gates; UI suites run locally and as a scheduled signal. The signal/gate
+evaluation ([evaluate-run.mjs](../.github/scripts/evaluate-run.mjs)) was checked locally against
+seven verdicts: passed; environment-only failures as gate (exit 1) and as signal (exit 0, warning);
+pre-flight stop as signal (exit 0, warning); one real failure as signal (exit 1); flaky as signal
+(exit 1); missing verdict (exit 1).
 
 ## Isolation and parallelism (M1–M3)
 

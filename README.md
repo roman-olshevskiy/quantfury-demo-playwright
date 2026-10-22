@@ -100,13 +100,25 @@ quarantined, slow starts, environment) is printed at the end of every run.
 
 ## CI (GitHub Actions)
 
-| Workflow                                               | Trigger                | Runs                                                              |
-| ------------------------------------------------------ | ---------------------- | ----------------------------------------------------------------- |
-| [pull-request.yml](.github/workflows/pull-request.yml) | Pull request to `main` | Static checks → mocked suite (4 workers) + live smoke (2 workers) |
-| [main.yml](.github/workflows/main.yml)                 | Push to `main`         | Static checks → `test:full` (2 workers)                           |
-| [scheduled.yml](.github/workflows/scheduled.yml)       | Weekdays 14:30 UTC     | Cross-browser smoke, then regression                              |
-| [manual.yml](.github/workflows/manual.yml)             | Manual dispatch        | Suite, browser and workers from fixed choices                     |
+> **Limitation:** on GitHub-hosted runners the Cloudflare layer in front of the demo answers the
+> web app's assets with HTTP 403 block pages, so browsers cannot render the app there. CI
+> therefore **gates on static checks and the live HTTP API suite**; the live UI, integration and
+> mocked suites run **locally** and in CI only as a **non-blocking scheduled signal**. The
+> framework never tries to bypass the bot protection.
+> See [ADR 0001](docs/decisions/0001-github-hosted-ci-gates-api-only.md).
 
+| Workflow                                               | Trigger                | Runs                                                                                  |
+| ------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------- |
+| [pull-request.yml](.github/workflows/pull-request.yml) | Pull request to `main` | Static checks → live API (gate)                                                       |
+| [main.yml](.github/workflows/main.yml)                 | Push to `main`         | Static checks → live API (gate)                                                       |
+| [scheduled.yml](.github/workflows/scheduled.yml)       | Weekdays 14:30 UTC     | Live API (gate) → mocked → cross-browser smoke → UI regression + integration (signal) |
+| [manual.yml](.github/workflows/manual.yml)             | Manual dispatch        | Suite, browser and workers from fixed choices (API as gate, UI as signal)             |
+
+- **gate**: any failure fails the job. **signal**: if every failure is caused by the environment
+  (pre-flight stop, or each failed test saw a CDN block/challenge page) the job ends with a
+  warning; a real failure or a flaky test still fails it. Signal jobs never block a merge.
+- Before merging a UI change, run `npm run test:ui`, `npm run test:integration` and
+  `npm run test:mocked` locally.
 - Node.js comes from `.nvmrc`, dependencies from `npm ci`, browsers from
   `npx playwright install --with-deps` matching the locked Playwright version.
 - Token permissions are `contents: read`; no secrets are used, so fork PRs run the same way.
@@ -186,6 +198,8 @@ Isolation and diagnostics:
 - [Test strategy](docs/test-strategy.md)
 - [Coverage map](docs/coverage-map.md)
 - [Reliability](docs/reliability.md)
+- [Decisions (ADRs)](docs/decisions/)
+- [Release notes v1.0.0 (draft)](docs/release-notes/v1.0.0.md)
 
 ## License
 
