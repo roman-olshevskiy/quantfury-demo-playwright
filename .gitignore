@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Playwright output
+playwright-report/
+test-results/
+blob-report/
+reports/
+playwright/.cache/
+playwright/.auth/
+
+# Storage state and network captures may contain session data
+*.storage-state.json
+storage-state/
+*.har
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
