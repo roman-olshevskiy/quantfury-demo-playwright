@@ -47,6 +47,7 @@ for GitHub-hosted runners, so browsers cannot render the app there
 | R8  | Demo session leaks between tests (shared device id or cache)             | Fixture design (fresh context)                           | Isolation runs on 1/2/4 workers   |
 | R9  | Real-time channel not established                                        | Live UI check of WebSocket handshake                     | —                                 |
 | R10 | External outage is reported as a product defect                          | Pre-flight availability check and failure classification | —                                 |
+| R11 | New accessibility barriers (WCAG 2.0/2.1 A, AA) on core screens          | axe smoke against a documented baseline (UI-08, UI-09)   | —                                 |
 
 ## 4. Suites, projects and tags
 
@@ -126,3 +127,6 @@ instrument list once. Repeated reliability runs are spaced out, not continuous.
 - WebSocket coverage is transport-level only (handshake and frame flow).
 - Market-dependent behavior (open/closed) is asserted conditionally, based on `/v13/markets` for
   the same run, never on wall-clock assumptions.
+- Accessibility coverage is an automated smoke check: axe-core finds only part of WCAG issues
+  (no keyboard-flow, screen-reader or zoom testing). Known violations are tracked per rule, not
+  per element, because element counts change with live data.

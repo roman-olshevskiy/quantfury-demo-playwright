@@ -66,6 +66,7 @@ suite imports `src/fixtures/mocked.ts`, which extends it.
 | `page` (extended)                        | test       | Fresh context; third-party hosts aborted; diagnostics listening       | Detach listeners; attach `page-diagnostics.json` on failure; annotate `environment` if a CDN block was seen |
 | `pageDiagnostics`, `networkExpectations` | test       | Diagnostics buffer; failures provoked on purpose                      | —                                                                                                           |
 | `tradePage`                              | test       | `TradePage` for this page (not opened)                                | Annotate `slow-start` when start-up > 6 s                                                                   |
+| `accessibility`                          | test       | axe-core scanner for this page (WCAG 2.0/2.1 A, AA)                   | Each scan attaches `axe-<label>.json` (rule, impact, node count, examples)                                  |
 | `mockApi`                                | test       | Narrow per-endpoint mocks                                             | `unrouteAll`; attach `mocked-requests.json` on failure                                                      |
 | `instrumentSnapshot`                     | **worker** | Validated, frozen full instrument list (immutable)                    | —                                                                                                           |
 

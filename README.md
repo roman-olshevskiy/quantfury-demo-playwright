@@ -14,28 +14,29 @@ Independent portfolio project: a test-automation framework for the public demo m
 
 ## What it covers
 
-| Suite                                    | Tests | What it checks                                                                                                                                                                       |
-| ---------------------------------------- | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Live HTTP API (`tests/api`)              |    18 | Contracts (JSON Schema), business invariants and error handling of the demo API: bootstrap, instruments, search categories, quotes, historical bars, markets, news, required headers |
-| Live UI (`tests/ui`)                     |     7 | Demo opens with restricted trading tabs, widgets, search and selection, empty search, list switching, reload state, real-time (SignalR) connection                                   |
-| UI/API integration (`tests/integration`) |     3 | The UI against the API response the same page received: searchability, panel attributes, popular searches                                                                            |
-| Mocked UI (`tests/mocked`)               |     6 | Empty, HTTP-error, business-error and slow responses, exact formatting, partial data — one endpoint mocked per test                                                                  |
+| Suite                                    | Tests | What it checks                                                                                                                                                                                                           |
+| ---------------------------------------- | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Live HTTP API (`tests/api`)              |    18 | Contracts (JSON Schema), business invariants and error handling of the demo API: bootstrap, instruments, search categories, quotes, historical bars, markets, news, required headers                                     |
+| Live UI (`tests/ui`)                     |     9 | Demo opens with restricted trading tabs, widgets, search and selection, empty search, list switching, reload state, real-time (SignalR) connection, accessibility smoke (axe, WCAG 2.1 AA) against a documented baseline |
+| UI/API integration (`tests/integration`) |     3 | The UI against the API response the same page received: searchability, panel attributes, popular searches                                                                                                                |
+| Mocked UI (`tests/mocked`)               |     6 | Empty, HTTP-error, business-error and slow responses, exact formatting, partial data — one endpoint mocked per test                                                                                                      |
 
 Scope: the public demo mode only — no accounts, no real financial operations, no load or security
 testing. Details: [test strategy](docs/test-strategy.md), [coverage map](docs/coverage-map.md).
 
 ## Stack
 
-| Tool             | Version                          |
-| ---------------- | -------------------------------- |
-| Node.js          | 24.13.0 LTS (see `.nvmrc`)       |
-| npm              | 11.x                             |
-| @playwright/test | 1.64.0                           |
-| TypeScript       | 6.0.3                            |
-| ESLint           | 10.11.0 (with typescript-eslint) |
-| Prettier         | 3.9.9                            |
-| Ajv              | 8.20.0 (+ ajv-formats 3.0.1)     |
-| zod / dotenv     | 4.6.5 / 18.0.5                   |
+| Tool                 | Version                          |
+| -------------------- | -------------------------------- |
+| Node.js              | 24.13.0 LTS (see `.nvmrc`)       |
+| npm                  | 11.x                             |
+| @playwright/test     | 1.64.0                           |
+| TypeScript           | 6.0.3                            |
+| ESLint               | 10.11.0 (with typescript-eslint) |
+| Prettier             | 3.9.9                            |
+| Ajv                  | 8.20.0 (+ ajv-formats 3.0.1)     |
+| zod / dotenv         | 4.6.5 / 18.0.5                   |
+| @axe-core/playwright | 4.13.0                           |
 
 ## Quick start
 
@@ -113,6 +114,7 @@ Defined per kind in [src/config/timeouts.ts](src/config/timeouts.ts) instead of 
 | `npm run test:ui`                                                    | Live UI suite, Chromium                           |
 | `npm run test:integration`                                           | UI/API consistency tests, Chromium                |
 | `npm run test:mocked`                                                | Mocked UI suite                                   |
+| `npm run test:a11y`                                                  | Accessibility smoke (`@a11y`), Chromium           |
 | `npm run test:regression`                                            | `@regression` tests, API and Chromium             |
 | `npm run test:cross-browser`                                         | `@smoke` UI tests in Chromium, Firefox and WebKit |
 | `npm run test:full`                                                  | API, Chromium UI + integration, mocked            |
@@ -232,6 +234,7 @@ src/
     components/  AssetSearch, InstrumentListWidget, InstrumentPanel
     network/     MockApi, PageDiagnostics, RealtimeHubMonitor, page response capture
     formatting.ts  currency glyphs used by the app's font
+    accessibility.ts  axe-core scanner (WCAG 2.0/2.1 A, AA)
   data/
     builders/    schema-validated mock payloads
     known-instruments.ts

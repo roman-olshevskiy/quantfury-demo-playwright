@@ -11,6 +11,7 @@ import { validators } from '../api/schemas/validators';
 import { env } from '../config/env';
 import { timeouts } from '../config/timeouts';
 import { ENVIRONMENT_ANNOTATION } from '../environment/markers';
+import { AccessibilityScanner } from '../ui/accessibility';
 import { MockApi } from '../ui/network/mock-api';
 import { NetworkExpectations } from '../ui/network/network-expectations';
 import { PageDiagnostics } from '../ui/network/page-diagnostics';
@@ -30,6 +31,8 @@ export interface UiFixtures {
   networkExpectations: NetworkExpectations;
   /** Bounded page/network diagnostics, attached to the report when the test fails. */
   pageDiagnostics: PageDiagnostics;
+  /** axe-core scans of this test's page (WCAG 2.0/2.1 A and AA), each attached to the report. */
+  accessibility: AccessibilityScanner;
 }
 
 export interface UiWorkerFixtures {
@@ -98,6 +101,10 @@ export const uiTest = base.extend<UiFixtures, UiWorkerFixtures>({
         contentType: 'application/json',
       });
     }
+  },
+
+  accessibility: async ({ page }, use, testInfo) => {
+    await use(new AccessibilityScanner(page, testInfo));
   },
 
   tradePage: async ({ page }, use, testInfo) => {
