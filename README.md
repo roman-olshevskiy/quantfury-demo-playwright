@@ -7,8 +7,8 @@ Independent portfolio project: a test-automation framework for the public demo m
 > with or endorsed by Quantfury. It only exercises the publicly available demo mode, without
 > accounts, credentials or real financial operations.
 
-**Status:** work in progress — M1 done (config, fixtures, API clients, live API suite). UI,
-integration and mocked suites, CI and reliability results follow in later milestones.
+**Status:** work in progress — M2 done (live API, live UI, UI/API integration and mocked suites).
+CI, quality gates and reliability results follow in later milestones.
 
 ## Stack
 
@@ -67,6 +67,7 @@ Defined per kind in [src/config/timeouts.ts](src/config/timeouts.ts) instead of 
 | Web-first assertion       | 10 s  |
 | UI action                 | 15 s  |
 | Navigation                | 30 s  |
+| App start (layout ready)  | 30 s  |
 | Single API request        | 30 s  |
 
 ## Running tests
@@ -95,16 +96,33 @@ src/
     models/    compile-time types of the API payloads
     schemas/   JSON Schemas + compiled Ajv validators (runtime validation)
   assertions/  expectToMatchSchema (narrows unknown → model), HTTP helpers
-  fixtures/    typed fixtures: fresh device id, isolated APIRequestContext, clients, diagnostics
-  data/        known instruments used as test data
+  fixtures/    typed fixtures: API (device id, request context, clients) and UI (page, mocks,
+               diagnostics), merged into one `test`
+  ui/
+    pages/       TradePage (the demo entry point)
+    components/  AssetSearch, InstrumentListWidget, InstrumentPanel
+    network/     MockApi, PageDiagnostics, RealtimeHubMonitor, page response capture
+    formatting.ts  currency glyphs used by the app's font
+  data/
+    builders/    schema-validated mock payloads
+    known-instruments.ts
 tests/
-  api/         live API suite
+  api/          live API suite
+  ui/           live UI suite
+  integration/  UI vs. the API payload the page received
+  mocked/       UI with one endpoint mocked per test
 ```
 
-Every API test gets a fresh demo identity (`custom-deviceid`) and its own `APIRequestContext`,
-disposed after the test. On failure, the redacted request/response history of the test is attached
-to the report as `api-exchanges.json` (bounded to the last 50 exchanges, bodies truncated, device
-ids and other session-like values masked).
+Isolation and diagnostics:
+
+- Every API test gets a fresh demo identity (`custom-deviceid`) and its own `APIRequestContext`,
+  disposed after the test. On failure, the redacted request/response history is attached as
+  `api-exchanges.json` (last 50 exchanges, bodies truncated, session-like values masked).
+- Every UI test gets a new browser context, so a fresh demo identity. Third-party hosts
+  (analytics, ads, chat, crash reporting) are aborted; only the app's three hosts are reachable.
+  On failure, `page-diagnostics.json` lists page and console errors, failed requests, HTTP errors,
+  requests still in flight and WebSocket frame counts (bounded, redacted; failures provoked by a
+  mock are labelled as expected). Mocked tests also attach `mocked-requests.json`.
 
 ## Documentation
 

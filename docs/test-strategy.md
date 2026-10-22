@@ -61,7 +61,12 @@ Tags select suites through `--grep`; a test exists in exactly one directory.
   (`page.waitForResponse`) and compares UI output with that payload, normalizing the currency
   glyphs and number formatting.
 - **Mocked UI** — `page.route` on one endpoint at a time, registered before navigation; fixtures
-  are built by typed builders and validated against the same schemas as the live API.
+  are built by typed builders and validated against the same schemas as the live API. The full
+  instrument list is served from a worker-scoped snapshot (fetched once per worker, immutable), and
+  the SignalR hub is stubbed where live quotes would overwrite mocked values.
+- **Start-up latency** — about 1 in 15–20 fresh loads takes 11–17 s to render (product behavior,
+  discovery §12). The readiness wait has its own 30 s timeout and slow starts are annotated
+  `slow-start` in the report; they are neither retried nor hidden.
 
 ## 6. Quality gates
 
