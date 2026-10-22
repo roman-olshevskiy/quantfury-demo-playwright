@@ -1,6 +1,7 @@
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
 
 import { env } from './src/config/env';
+import { timeouts } from './src/config/timeouts';
 
 const liveRetries = env.CI ? 1 : 0;
 
@@ -19,15 +20,15 @@ export default defineConfig({
   forbidOnly: env.CI,
   workers: env.WORKERS,
   reporter: reporters,
-  timeout: 60_000,
-  expect: { timeout: 10_000 },
+  timeout: timeouts.test,
+  expect: { timeout: timeouts.expect },
   use: {
     baseURL: env.BASE_URL,
     locale: 'en-US',
     timezoneId: 'UTC',
     viewport: { width: 1440, height: 900 },
-    actionTimeout: 15_000,
-    navigationTimeout: 30_000,
+    actionTimeout: timeouts.action,
+    navigationTimeout: timeouts.navigation,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
