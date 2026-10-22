@@ -54,7 +54,7 @@ solvers) is out of bounds for this project.
 
 - PR and `main` CI give a fast, reliable signal for code quality and the API contract.
 - UI regressions are not caught by CI before merge; they are caught by local runs (required in
-  [CONTRIBUTING](../../CONTRIBUTING.md) for UI changes, M4) and, if the block is lifted, by the
+  [CONTRIBUTING](../../CONTRIBUTING.md) for UI changes) and, if the block is lifted, by the
   scheduled signal, which then starts reporting real UI results without further changes.
 - The scheduled workflow keeps measuring whether GitHub-hosted runners are still blocked; its job
   summary lists the blocked requests with cf-ray.
