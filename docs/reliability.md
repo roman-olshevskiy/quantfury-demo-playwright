@@ -19,8 +19,22 @@ Each gate was exercised with a deliberate, temporary failure that was removed af
 | 2026-10-22 | same, `CI=true`                 | Quarantine past its review date                          | `playwright test`  | 1         | Blocks                                                |
 | 2026-10-22 | same                            | API host unreachable (`API_BASE_URL=https://….invalid/`) | `playwright test`  | 1         | `ENVIRONMENT UNAVAILABLE (unreachable)`, no tests run |
 
-CI evidence (the same gates on GitHub-hosted runners) is added once the workflows have run on a
-pull request.
+## CI runs on GitHub-hosted runners
+
+| Date       | Run                        | Commit    | Job        | Result        | Classification                                                                                                                                                                                                                                          |
+| ---------- | -------------------------- | --------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-22 | PR #6, Pull request run #1 | `45eff9f` | static     | passed (28 s) | —                                                                                                                                                                                                                                                       |
+| 2026-10-22 | same                       | `45eff9f` | mocked     | 0/6           | **environment** — the worker-scoped instrument snapshot received HTTP 403 with an HTML page (Cloudflare-style error template) from `n1.trdngbcknd.com/v13/instruments`                                                                                  |
+| 2026-10-22 | same                       | `45eff9f` | live-smoke | 3/6           | API tests passed (incl. the full instrument list); the 3 UI tests never rendered the trade layout within 30 s, also on retry. **environment (suspected)** — the same block, or a challenge on the web app page for headless Chromium on a datacenter IP |
+
+The pre-flight reported `available` because it probed only `searchCategories`, so the block was
+not classified. Follow-up changes (M3): the pre-flight also probes the instrument-list path;
+CDN block and challenge pages are recognized in the pre-flight, the API exchange log, the page
+diagnostics and the instrument snapshot; a failed test that saw one is annotated `environment`,
+and the run summary counts and lists those failures with path, status, cf-ray and page title.
+Verified locally with simulated block pages: a challenged main document stalls start-up and is
+reported as "Failed because of the environment", exit code 1; blocked API or bootstrap
+responses alone do not stop the app from rendering.
 
 ## Isolation and parallelism (M1–M3)
 

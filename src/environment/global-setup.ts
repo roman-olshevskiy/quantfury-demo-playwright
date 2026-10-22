@@ -2,10 +2,9 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 
 import { checkAvailability, type AvailabilityReport } from './availability';
+import { ENVIRONMENT_UNAVAILABLE } from './markers';
 
 export const ENVIRONMENT_REPORT_PATH = 'reports/environment.json';
-/** Prefix the summary reporter uses to classify a run as an environment failure. */
-export const ENVIRONMENT_UNAVAILABLE = 'ENVIRONMENT UNAVAILABLE';
 
 // One extra attempt absorbs a single dropped connection; anything longer is a real outage.
 const ATTEMPTS = 2;

@@ -276,8 +276,13 @@ its own device identity.
    ~15 s before requesting widget data. Classified as **product/environment behavior**. Tests wait
    up to `timeouts.appStart` (30 s) for the layout and annotate starts slower than 6 s as
    `slow-start`, so the rate stays visible in reports instead of being retried away.
-2. **Cloudflare** did not challenge headless Chromium from a residential IP. GitHub-hosted runners
-   use datacenter IPs and may be challenged; this can only be confirmed in CI.
+2. **Cloudflare** did not challenge headless Chromium from a residential IP. On GitHub-hosted
+   runners (datacenter IPs) the first CI run (2026-10-22) received **HTTP 403 HTML pages** for
+   `/v13/instruments` and the UI never rendered, while other API calls succeeded — see
+   [reliability.md](reliability.md#ci-runs-on-github-hosted-runners). Such responses are now
+   detected and classified as environment conditions; they are never bypassed. Locally, the app
+   still renders with the whole demo API or bootstrap host blocked; only a blocked main document
+   stalls start-up.
 3. **Rate limits** are unknown. Every fresh UI test downloads the ~1 MB instrument list; the
    suites keep request volume low (workers ≤ 2 for live runs).
 4. The meaning of several abbreviated keys (`aot`, `los`, `sos`, `tos`, `lopgp`, `auss`, `s` in

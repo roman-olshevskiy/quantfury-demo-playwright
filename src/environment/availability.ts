@@ -5,6 +5,7 @@ import { request, type APIResponse } from '@playwright/test';
 import { demoHeaders } from '../api/http/demo-headers';
 import { apiPaths } from '../api/paths';
 import { env } from '../config/env';
+import { describeBlockedResponse } from './blocked-response';
 
 /**
  * Why the environment is not usable. Kept separate from test results so an outage is never read
@@ -62,16 +63,15 @@ function targets(): Target[] {
       headers,
       accept: isSuccessEnvelope,
     },
+    {
+      // The first CI run saw this path blocked (HTTP 403 HTML) while others answered. A delta
+      // request with a future `afterDate` hits the same path but returns ~0.5 KB, not ~1 MB.
+      name: 'demo API instrument list',
+      url: `${new URL(apiPaths.instruments, env.API_BASE_URL).toString()}?afterDate=${String(Date.now() + 86_400_000)}`,
+      headers,
+      accept: isSuccessEnvelope,
+    },
   ];
-}
-
-/** Cloudflare marks challenge pages; a challenged runner cannot use the app (no bypass). */
-function isBotChallenge(response: APIResponse): boolean {
-  const headers = response.headers();
-  return (
-    headers['cf-mitigated'] === 'challenge' ||
-    ([403, 503].includes(response.status()) && (headers.server ?? '').includes('cloudflare'))
-  );
 }
 
 async function check(target: Target): Promise<AvailabilityCheck> {
@@ -82,14 +82,14 @@ async function check(target: Target): Promise<AvailabilityCheck> {
     const response = await context.get(target.url, { timeout: CHECK_TIMEOUT_MS });
     const durationMs = Date.now() - startedAt;
     const httpStatus = response.status();
-    if (isBotChallenge(response)) {
-      return {
-        ...base,
-        status: 'bot-protection',
-        httpStatus,
-        durationMs,
-        detail: 'Cloudflare challenge',
-      };
+    const body = await response.text();
+    const blocked = describeBlockedResponse({
+      status: httpStatus,
+      headers: response.headers(),
+      body,
+    });
+    if (blocked !== undefined) {
+      return { ...base, status: 'bot-protection', httpStatus, durationMs, detail: blocked };
     }
     if (httpStatus !== 200) {
       return {
@@ -100,7 +100,7 @@ async function check(target: Target): Promise<AvailabilityCheck> {
         detail: `HTTP ${String(httpStatus)}`,
       };
     }
-    const problem = target.accept?.(response, await response.text());
+    const problem = target.accept?.(response, body);
     return problem === undefined
       ? { ...base, status: 'available', httpStatus, durationMs, detail: 'OK' }
       : { ...base, status: 'http-error', httpStatus, durationMs, detail: problem };
@@ -116,7 +116,7 @@ async function check(target: Target): Promise<AvailabilityCheck> {
   }
 }
 
-/** Checks the three hosts the demo needs with one cheap request each. */
+/** Checks the three hosts the demo needs with one cheap request per endpoint. */
 export async function checkAvailability(): Promise<AvailabilityReport> {
   const checks = await Promise.all(targets().map(check));
   const failed = checks.find((item) => item.status !== 'available');

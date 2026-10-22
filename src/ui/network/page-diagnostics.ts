@@ -1,5 +1,6 @@
 import type { ConsoleMessage, Page, Request, Response, WebSocket } from '@playwright/test';
 
+import { describeBlockedResponse } from '../../environment/blocked-response';
 import { BoundedBuffer } from '../../utils/bounded-buffer';
 import { redactUrl, truncate } from '../../utils/redact';
 import type { NetworkExpectations } from './network-expectations';
@@ -11,6 +12,8 @@ interface DiagnosticEvent {
   url?: string;
   /** Set when the test provoked this failure on purpose. */
   expected?: string;
+  /** Set when the CDN / bot protection answered instead of the application. */
+  blockedBy?: string;
 }
 
 interface SocketSummary {
@@ -71,12 +74,50 @@ export class PageDiagnostics {
 
   readonly #onResponse = (response: Response) => {
     if (response.status() < 400 || !this.#appHosts.has(new URL(response.url()).hostname)) return;
-    this.#add({
-      kind: 'http-error',
-      message: `${response.request().method()} → HTTP ${String(response.status())}`,
-      url: response.url(),
+    const recording: Promise<void> = this.#recordHttpError(response).finally(() => {
+      this.#pending.delete(recording);
     });
+    this.#pending.add(recording);
   };
+
+  readonly #pending = new Set<Promise<void>>();
+  readonly #blocked = new BoundedBuffer<string>(10);
+
+  async #recordHttpError(response: Response): Promise<void> {
+    const method = response.request().method();
+    const status = response.status();
+    const headers = response.headers();
+    let body: string | undefined;
+    if ((headers['content-type'] ?? '').includes('text/html')) {
+      // The body may already be gone (page closed, redirect); the headers still classify it.
+      body = await response.text().catch(() => undefined);
+    }
+    const blockedBy = describeBlockedResponse({
+      status,
+      headers,
+      ...(body === undefined ? {} : { body }),
+    });
+    const event: Omit<DiagnosticEvent, 'at' | 'expected'> = {
+      kind: 'http-error',
+      message: `${method} → HTTP ${String(status)}`,
+      url: response.url(),
+    };
+    if (blockedBy !== undefined) {
+      event.blockedBy = blockedBy;
+      this.#blocked.push(`${method} ${new URL(response.url()).pathname} → ${blockedBy}`);
+    }
+    this.#add(event);
+  }
+
+  /** Waits for HTTP error bodies still being read; call before reading the results. */
+  async settle(): Promise<void> {
+    await Promise.all(this.#pending);
+  }
+
+  /** Responses answered by the CDN / bot protection instead of the application. */
+  get blockedResponses(): readonly string[] {
+    return this.#blocked.items;
+  }
 
   readonly #onWebSocket = (socket: WebSocket) => {
     const summary: SocketSummary = {

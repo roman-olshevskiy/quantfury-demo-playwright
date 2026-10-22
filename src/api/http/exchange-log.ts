@@ -1,3 +1,4 @@
+import { describeBlockedResponse } from '../../environment/blocked-response';
 import { BoundedBuffer } from '../../utils/bounded-buffer';
 import { redactHeaders, redactJson, redactUrl, truncate } from '../../utils/redact';
 
@@ -11,6 +12,8 @@ export interface ApiExchange {
   responseHeaders?: Record<string, string>;
   responseBody?: string;
   transportError?: string;
+  /** Set when the CDN / bot protection answered instead of the application. */
+  blockedBy?: string;
 }
 
 export interface ExchangeInput {
@@ -37,6 +40,8 @@ const KEPT_RESPONSE_HEADERS = new Set([
   'cf-cache-status',
   'date',
   'retry-after',
+  'server',
+  'cf-mitigated',
 ]);
 
 /**
@@ -45,6 +50,7 @@ const KEPT_RESPONSE_HEADERS = new Set([
  */
 export class ApiExchangeLog {
   readonly #entries: BoundedBuffer<ApiExchange>;
+  readonly #blocked = new BoundedBuffer<string>(10);
 
   constructor(capacity = 50) {
     this.#entries = new BoundedBuffer(capacity);
@@ -64,8 +70,24 @@ export class ApiExchangeLog {
       entry.responseBody = truncate(input.responseText, MAX_BODY_CHARS);
     }
     if (input.transportError !== undefined) entry.transportError = input.transportError;
+    if (input.status !== undefined) {
+      const blocked = describeBlockedResponse({
+        status: input.status,
+        headers: input.responseHeaders ?? {},
+        ...(input.responseText === undefined ? {} : { body: input.responseText }),
+      });
+      if (blocked !== undefined) {
+        entry.blockedBy = blocked;
+        this.#blocked.push(`${input.method} ${new URL(input.url).pathname} → ${blocked}`);
+      }
+    }
 
     this.#entries.push(entry);
+  }
+
+  /** Exchanges answered by the CDN / bot protection instead of the application. */
+  get blocked(): readonly string[] {
+    return this.#blocked.items;
   }
 
   get size(): number {
