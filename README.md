@@ -177,6 +177,13 @@ quarantined, slow starts, environment) is printed at the end of every run.
 - Node.js comes from `.nvmrc`, dependencies from `npm ci`, browsers from
   `npx playwright install --with-deps` matching the locked Playwright version.
 - Token permissions are `contents: read`; no secrets are used, so fork PRs run the same way.
+- **Dependency audit** (`static / Dependency audit`, PR and `main`): `npm run audit:deps` fails on
+  known vulnerabilities of severity high or critical and on packages whose registry signatures or
+  provenance attestations do not verify.
+- **Dependabot** ([dependabot.yml](.github/dependabot.yml)): weekly npm updates (minor and patch
+  grouped in one PR) and monthly GitHub Actions updates (SHA pins kept), each only after a
+  release has been public for 14 days. Major updates of `typescript` and `@types/node` are held
+  back (typescript-eslint peer range, Node.js 24).
 - Every job has a timeout. Stale PR runs are cancelled; runs on `main`, scheduled and manual
   runs queue instead.
 - Retries: 0 locally and for the mocked suite, at most 1 for live suites in CI. A test that passes

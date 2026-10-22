@@ -1,0 +1,46 @@
+# Dependency updates (requirements §4.2, §26): one PR per group, checked by the normal PR gates.
+# Updates touching Playwright or UI code also need the local UI runs (CONTRIBUTING, ADR 0001).
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    # Same rule as the initial pinning: take releases that have been public for two weeks.
+    cooldown:
+      default-days: 14
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    groups:
+      dev-tooling-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # typescript-eslint supports TypeScript < 6.1; a major TypeScript update needs a
+      # matching typescript-eslint release first.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      # Types must match the Node.js major in .nvmrc (24).
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+    commit-message:
+      prefix: chore
+      include: scope
+
+  - package-ecosystem: github-actions
+    # Workflows and the composite setup action; actions stay pinned to commit SHAs.
+    directories:
+      - /
+      - /.github/actions/setup
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 14
+    groups:
+      github-actions:
+        patterns: ['*']
+    commit-message:
+      prefix: ci
