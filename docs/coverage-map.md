@@ -30,17 +30,18 @@ All rows are automated (M1).
 
 All rows are automated (M2).
 
-| ID    | Feature                         | Risk | Check                                                                                        | Kind          | Tags                          | Test file                                                  |
-| ----- | ------------------------------- | ---- | -------------------------------------------------------------------------------------------- | ------------- | ----------------------------- | ---------------------------------------------------------- |
-| UI-01 | Demo opens                      | R1   | Trade screen ready; Watchlist enabled; Portfolio and Limit Orders disabled; search editable  | behavior      | `@ui @live @smoke`            | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
-| UI-02 | Widgets render data             | R1   | Momentum and Most Traded rows have price (glyph, grouping) and change (`0.00%`) text         | behavior      | `@ui @live @smoke`            | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
-| UI-03 | Search and select               | R3   | "Apple" finds `AAPL.OQ`; selecting opens the panel with name, Last Price and a numeric price | behavior      | `@ui @live @smoke`            | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts)   |
-| UI-04 | Empty search                    | R3   | Unknown query shows "No Results Matched", echoes the query, lists Popular Searches           | behavior      | `@ui @live @regression`       | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts)   |
-| UI-05 | Widget filters                  | R1   | Top Gainers → Top Losers changes the list; no instrument is in both                          | behavior      | `@ui @live @regression`       | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
-| UI-06 | Reload state                    | R8   | After reload the panel is closed and search is empty; the device id is kept                  | behavior      | `@ui @live @regression`       | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
-| UI-07 | Real-time channel               | R9   | One SignalR hub connection, MessagePack handshake, frames received                           | behavior      | `@ui @live @regression`       | [realtime.spec.ts](../tests/ui/realtime.spec.ts)           |
-| UI-08 | Accessibility: Trade screen     | R11  | axe (WCAG 2.0/2.1 A, AA) on the populated screen: no rule outside the documented baseline    | accessibility | `@ui @live @regression @a11y` | [accessibility.spec.ts](../tests/ui/accessibility.spec.ts) |
-| UI-09 | Accessibility: search and panel | R11  | axe on the search results and on the instrument panel: no rule outside the baseline          | accessibility | `@ui @live @regression @a11y` | [accessibility.spec.ts](../tests/ui/accessibility.spec.ts) |
+| ID    | Feature                             | Risk | Check                                                                                                                                   | Kind          | Tags                          | Test file                                                  |
+| ----- | ----------------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------- | ---------------------------------------------------------- |
+| UI-01 | Demo opens                          | R1   | Trade screen ready; Watchlist enabled; Portfolio and Limit Orders disabled; search editable                                             | behavior      | `@ui @live @smoke`            | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
+| UI-02 | Widgets render data                 | R1   | Momentum and Most Traded rows have price (glyph, grouping) and change (`0.00%`) text                                                    | behavior      | `@ui @live @smoke`            | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
+| UI-03 | Search and select                   | R3   | "Apple" finds `AAPL.OQ`; selecting opens the panel with name, Last Price and a numeric price                                            | behavior      | `@ui @live @smoke`            | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts)   |
+| UI-04 | Empty search                        | R3   | Unknown query shows "No Results Matched", echoes the query, lists Popular Searches                                                      | behavior      | `@ui @live @regression`       | [asset-search.spec.ts](../tests/ui/asset-search.spec.ts)   |
+| UI-05 | Widget filters                      | R1   | Top Gainers → Top Losers changes the list; no instrument is in both                                                                     | behavior      | `@ui @live @regression`       | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
+| UI-06 | Reload state                        | R8   | After reload the panel is closed and search is empty; the device id is kept                                                             | behavior      | `@ui @live @regression`       | [trade-screen.spec.ts](../tests/ui/trade-screen.spec.ts)   |
+| UI-07 | Real-time channel                   | R9   | One hub connection, MessagePack handshake, price-stream subscriptions sent, `OnNewPriceAsync` pushes received, every envelope decodable | behavior      | `@ui @live @regression`       | [realtime.spec.ts](../tests/ui/realtime.spec.ts)           |
+| UI-10 | Real-time subscription on selection | R9   | Selecting `BTC/USDT` sends `SubscribeToDetailsStream` and `SubscribeToTradesStream` for it; `OnNewDetailsAsync` pushes arrive           | behavior      | `@ui @live @regression`       | [realtime.spec.ts](../tests/ui/realtime.spec.ts)           |
+| UI-08 | Accessibility: Trade screen         | R11  | axe (WCAG 2.0/2.1 A, AA) on the populated screen: no rule outside the documented baseline                                               | accessibility | `@ui @live @regression @a11y` | [accessibility.spec.ts](../tests/ui/accessibility.spec.ts) |
+| UI-09 | Accessibility: search and panel     | R11  | axe on the search results and on the instrument panel: no rule outside the baseline                                                     | accessibility | `@ui @live @regression @a11y` | [accessibility.spec.ts](../tests/ui/accessibility.spec.ts) |
 
 Accessibility baseline (known product issues, [accessibility-baseline.ts](../src/data/accessibility-baseline.ts)):
 `button-name` (critical), `scrollable-region-focusable` (serious), `color-contrast` (serious).
@@ -62,14 +63,15 @@ same page received.
 All rows are automated (M2). Expected reactions were observed with exploratory mocks before the
 tests were written; one endpoint is mocked per test, the rest is live.
 
-| ID     | Feature                  | Risk | Check                                                                                                 | Kind       | Tags          | Test file                                                          |
-| ------ | ------------------------ | ---- | ----------------------------------------------------------------------------------------------------- | ---------- | ------------- | ------------------------------------------------------------------ |
-| MOC-01 | Empty widget data        | R7   | Empty `topGainers` → "0 Gainers", no rows; Most Traded unaffected                                     | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
-| MOC-02 | HTTP error               | R7   | HTTP 500 → "An error occurred, please try again"; Most Traded unaffected                              | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
-| MOC-03 | Business error envelope  | R7   | `isSuccess: false` → the envelope's `error` text is shown                                             | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
-| MOC-04 | Slow response            | R7   | Held response → no rows, no empty/error text while pending; rows after release                        | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
-| MOC-05 | Deterministic formatting | R4   | Hub stubbed, fixed quotes: `Χ1,234.50` / `3.46%` (USD), `81,234.57` / `1.50%` (USDT, negative change) | behavior   | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts) |
-| MOC-06 | Partial instrument data  | R7   | `AAPL.OQ` without optional keys is still found and opens in the panel                                 | resilience | `@mocked @ui` | [instrument-list.spec.ts](../tests/mocked/instrument-list.spec.ts) |
+| ID     | Feature                    | Risk | Check                                                                                                                                                 | Kind       | Tags          | Test file                                                                |
+| ------ | -------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------- | ------------------------------------------------------------------------ |
+| MOC-01 | Empty widget data          | R7   | Empty `topGainers` → "0 Gainers", no rows; Most Traded unaffected                                                                                     | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts)       |
+| MOC-02 | HTTP error                 | R7   | HTTP 500 → "An error occurred, please try again"; Most Traded unaffected                                                                              | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts)       |
+| MOC-03 | Business error envelope    | R7   | `isSuccess: false` → the envelope's `error` text is shown                                                                                             | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts)       |
+| MOC-04 | Slow response              | R7   | Held response → no rows, no empty/error text while pending; rows after release                                                                        | resilience | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts)       |
+| MOC-05 | Deterministic formatting   | R4   | Hub stubbed, fixed quotes: `Χ1,234.50` / `3.46%` (USD), `81,234.57` / `1.50%` (USDT, negative change)                                                 | behavior   | `@mocked @ui` | [momentum-widget.spec.ts](../tests/mocked/momentum-widget.spec.ts)       |
+| MOC-06 | Partial instrument data    | R7   | `AAPL.OQ` without optional keys is still found and opens in the panel                                                                                 | resilience | `@mocked @ui` | [instrument-list.spec.ts](../tests/mocked/instrument-list.spec.ts)       |
+| MOC-07 | Hub disconnect / reconnect | R9   | Hub dropped through a local proxy → new connection within the observed ~15 s (+10 s), handshake, prices re-subscribed and received, widgets keep data | resilience | `@mocked @ui` | [realtime-reconnect.spec.ts](../tests/mocked/realtime-reconnect.spec.ts) |
 
 ## BDD scenarios (`bdd/features`, project `bdd`)
 
@@ -86,10 +88,10 @@ already covered above in business language; they are not counted as additional c
 
 ## Not covered (and why)
 
-| Area                                      | Reason                                                                      |
-| ----------------------------------------- | --------------------------------------------------------------------------- |
-| Trading, portfolio, limit orders          | Disabled in demo mode                                                       |
-| Watchlist editing, device registration    | State-changing endpoints; not needed for read-only coverage (discovery §10) |
-| WebSocket message content                 | Binary MessagePack; decoder dependency not approved (P1 candidate)          |
-| Chart canvas rendering                    | Canvas in an iframe; data verified through `chart/web` instead              |
-| Other routes (`/account`, `/settings`, …) | Out of scope (requirements §3)                                              |
+| Area                                      | Reason                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------ |
+| Trading, portfolio, limit orders          | Disabled in demo mode                                                          |
+| Watchlist editing, device registration    | State-changing endpoints; not needed for read-only coverage (discovery §10)    |
+| WebSocket push payloads (prices, details) | Opaque binary format, not MessagePack; only the envelope is decoded (ADR 0007) |
+| Chart canvas rendering                    | Canvas in an iframe; data verified through `chart/web` instead                 |
+| Other routes (`/account`, `/settings`, …) | Out of scope (requirements §3)                                                 |

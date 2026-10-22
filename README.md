@@ -14,13 +14,13 @@ Independent portfolio project: a test-automation framework for the public demo m
 
 ## What it covers
 
-| Suite                                    | Tests | What it checks                                                                                                                                                                                                           |
-| ---------------------------------------- | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Live HTTP API (`tests/api`)              |    18 | Contracts (JSON Schema), business invariants and error handling of the demo API: bootstrap, instruments, search categories, quotes, historical bars, markets, news, required headers                                     |
-| Live UI (`tests/ui`)                     |     9 | Demo opens with restricted trading tabs, widgets, search and selection, empty search, list switching, reload state, real-time (SignalR) connection, accessibility smoke (axe, WCAG 2.1 AA) against a documented baseline |
-| UI/API integration (`tests/integration`) |     3 | The UI against the API response the same page received: searchability, panel attributes, popular searches                                                                                                                |
-| Mocked UI (`tests/mocked`)               |     6 | Empty, HTTP-error, business-error and slow responses, exact formatting, partial data — one endpoint mocked per test                                                                                                      |
-| BDD (`bdd/features`)                     |     5 | Business-level scenarios in Gherkin (demo access, instrument search, market momentum, instrument catalogue) on the same fixtures and page objects ([ADR 0006](docs/decisions/0006-bdd-scope.md))                         |
+| Suite                                    | Tests | What it checks                                                                                                                                                                                                                                       |
+| ---------------------------------------- | ----: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live HTTP API (`tests/api`)              |    18 | Contracts (JSON Schema), business invariants and error handling of the demo API: bootstrap, instruments, search categories, quotes, historical bars, markets, news, required headers                                                                 |
+| Live UI (`tests/ui`)                     |    10 | Demo opens with restricted trading tabs, widgets, search and selection, empty search, list switching, reload state, real-time (SignalR) price and per-instrument subscriptions, accessibility smoke (axe, WCAG 2.1 AA) against a documented baseline |
+| UI/API integration (`tests/integration`) |     3 | The UI against the API response the same page received: searchability, panel attributes, popular searches                                                                                                                                            |
+| Mocked UI (`tests/mocked`)               |     7 | Empty, HTTP-error, business-error and slow responses, exact formatting, partial data — one endpoint mocked per test; real-time hub disconnect and reconnect through a local proxy                                                                    |
+| BDD (`bdd/features`)                     |     5 | Business-level scenarios in Gherkin (demo access, instrument search, market momentum, instrument catalogue) on the same fixtures and page objects ([ADR 0006](docs/decisions/0006-bdd-scope.md))                                                     |
 
 Scope: the public demo mode only — no accounts, no real financial operations, no load or security
 testing. Details: [test strategy](docs/test-strategy.md), [coverage map](docs/coverage-map.md).
@@ -39,6 +39,7 @@ testing. Details: [test strategy](docs/test-strategy.md), [coverage map](docs/co
 | zod / dotenv         | 4.6.5 / 18.0.5                   |
 | @axe-core/playwright | 4.13.0                           |
 | playwright-bdd       | 9.2.1                            |
+| @msgpack/msgpack     | 3.1.3                            |
 
 ## Quick start
 
@@ -235,7 +236,8 @@ src/
   ui/
     pages/       TradePage (the demo entry point)
     components/  AssetSearch, InstrumentListWidget, InstrumentPanel
-    network/     MockApi, PageDiagnostics, RealtimeHubMonitor, page response capture
+    network/     MockApi, PageDiagnostics, page response capture; SignalR envelope decoding
+                 (RealtimeHubMonitor for live pages, HubProxy for disconnect scenarios)
     formatting.ts  currency glyphs used by the app's font
     accessibility.ts  axe-core scanner (WCAG 2.0/2.1 A, AA)
   data/
@@ -271,7 +273,9 @@ Isolation and diagnostics:
   annotated `slow-start`.
 - From datacenter IPs (for example GitHub-hosted runners) Cloudflare blocks the web app's assets;
   UI suites therefore run locally ([ADR 0001](docs/decisions/0001-github-hosted-ci-gates-api-only.md)).
-- WebSocket messages (binary MessagePack) are not decoded; the chart canvas is not checked
+- Real-time (SignalR) messages are decoded to the envelope only — targets, subscriptions,
+  counts; price and detail payloads are an opaque binary format. The app reconnects to the hub
+  after a fixed ~15 s, so the reconnect test takes ~20 s. The chart canvas is not checked
   visually.
 
 ## Troubleshooting

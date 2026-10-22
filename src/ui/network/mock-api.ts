@@ -4,6 +4,7 @@ import { readJson } from '../../api/http/read-json';
 import { apiPaths, realtimeHubPath } from '../../api/paths';
 import { BoundedBuffer } from '../../utils/bounded-buffer';
 import { redactUrl } from '../../utils/redact';
+import { HubProxy } from './hub-proxy';
 import type { NetworkExpectations, UrlPredicate } from './network-expectations';
 
 export interface HeldResponses {
@@ -99,6 +100,14 @@ export class MockApi {
       (url) => url.host === hubUrl.host && url.pathname === hubUrl.pathname,
       () => undefined,
     );
+  }
+
+  /**
+   * Routes the SignalR hub through a local pass-through proxy that records the traffic and can
+   * drop the connection (disconnect/reconnect scenarios). Use instead of `stubRealtimeHub`.
+   */
+  proxyRealtimeHub(): Promise<HubProxy> {
+    return HubProxy.install(this.#page, this.#apiOrigin);
   }
 
   get intercepted(): readonly string[] {
