@@ -208,12 +208,24 @@ must not set `additionalProperties: false` (requirements §12).
 - Handshake frame: `{"protocol":"messagepack","version":1}`; all further frames are **binary
   MessagePack**. ~100–350 frames are received in the first 10–15 s.
 - Selecting an instrument sends additional frames (subscription); typing in search sends one.
-- Decoding requires a MessagePack decoder, which is not part of the approved dependency list
-  (requirements §5). P0 coverage is limited to: the connection opens, the handshake requests
-  MessagePack, frames are received. Message-level checks are a P1 candidate (requires an ADR for
-  a decoder dependency).
 - Live quotes visible in the UI are updated through this channel; the HTTP `price` endpoint gives
   the initial snapshot.
+
+Decoded after v1.0.0 (2026-10-22, [ADR 0007](decisions/0007-realtime-hub-envelope-decoding.md)):
+
+- Binary frames are SignalR messages: a VarInt length prefix, then a MessagePack array
+  `[type, headers, invocationId, target, arguments]`. The server's handshake reply `{}` + record
+  separator arrives as a binary frame.
+- Client → server invocations: `SubscribeSystemUpdates` (on load),
+  `SubscribeToPriceStreams([shortNames])` in batches of ~40–110 instruments,
+  `UnsubscribePriceStreams([shortNames])`, pings; on selecting an instrument also
+  `SubscribeToDetailsStream([shortName])` and `SubscribeToTradesStream([shortName])`.
+- Server → client pushes: `OnNewPriceAsync` (hundreds per page view), `OnNewDetailsAsync` and
+  `OnNewTradeAsync` after a selection. Their single argument is an opaque binary payload that is
+  not MessagePack; it is not decoded.
+- Reconnect: when the server side drops the connection, the app opens a new hub connection after
+  a fixed **~15 s** (3/3 observations), repeats the handshake and re-subscribes; the widgets keep
+  their data and no message is shown to the user.
 
 ## 8. Market sessions and live data
 
@@ -291,7 +303,8 @@ its own device identity.
    (stocks, futures, forex, crypto, ETFs) is inferred from the widget filters.
 6. `topGainers`/`topLoosers` ignore `amount` for the returned list length; the UI shows
    `amount` rows. The API behavior is recorded, not judged as a defect.
-7. The WebSocket message content is not decoded (MessagePack); no claims are made about it.
+7. The SignalR envelope is decoded (§7), but the push payloads are an undocumented binary format;
+   no claims are made about their content.
 8. `telemetry/ipInfo` and the economic calendar content depend on the caller's region and time.
 9. Observations are from one day and one region; API version `v13` may be deprecated later
    (`v14` is advertised as supported).
